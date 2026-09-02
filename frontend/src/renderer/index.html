@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'none'; img-src 'self' data:; base-uri 'none'; form-action 'none'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Chat TTS</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="titlebar">
+        <img class="brand-logo" src="../assets/livechattts-logo.png" alt="" />
+        <span>Live Chat TTS</span>
+        <button id="language-toggle" class="language-toggle" type="button" aria-label="Switch language" title="Switch language"><img id="language-flag" class="language-flag" src="../assets/flag-es.svg" alt="" /></button>
+        <span id="mode-badge" class="mode-badge" data-i18n="mode.starting">Starting</span>
+      </header>
+      <section class="hero">
+        <img id="voice-orb" class="voice-logo" src="../assets/livechattts-logo.png" alt="Voice status" data-i18n-alt="voice.status" />
+        <div>
+          <p id="connection-state" class="connection-state" data-i18n="connection.preparing">Preparing local backend</p>
+          <p id="connection-detail" class="connection-detail" data-i18n="connection.localReady">Speech will work without cloud services.</p>
+        </div>
+      </section>
+      <section class="card connect-card">
+        <label for="username" data-i18n="form.tiktokUsername">TikTok username</label>
+        <div class="input-row">
+          <span>@</span>
+          <input id="username" maxlength="64" autocomplete="off" placeholder="your_username" data-i18n-placeholder="form.usernamePlaceholder" />
+          <button id="connect-button" class="primary" data-i18n="action.connect">Connect</button>
+        </div>
+        <button id="disconnect-button" class="text-button" hidden data-i18n="action.disconnect">Disconnect</button>
+      </section>
+      <section class="metrics" aria-label="Activity" data-i18n-aria-label="activity.label">
+        <div><strong id="queue-depth">0</strong><span data-i18n="metric.queue">In queue</span></div>
+        <div><strong id="accepted-count">0</strong><span data-i18n="metric.read">Read</span></div>
+        <div><strong id="dropped-count">0</strong><span data-i18n="metric.protected">Protected</span></div>
+      </section>
+      <section class="card chat-card" aria-labelledby="chat-title">
+        <header class="chat-header">
+          <div>
+            <h2 id="chat-title" data-i18n="activity.title">LIVE activity</h2>
+            <p data-i18n="activity.lastMessages">Last 100 messages</p>
+          </div>
+          <span id="chat-count" class="chat-count">0</span>
+        </header>
+        <div id="chat-list" class="chat-list" role="log" aria-live="polite" aria-relevant="additions text">
+          <p id="chat-empty" class="chat-empty" data-i18n="activity.empty">LIVE messages will appear here.</p>
+        </div>
+      </section>
+      <section class="card settings-card">
+        <button id="settings-toggle" class="settings-toggle" aria-expanded="false">
+          <span data-i18n="settings.title">⚙ Voice settings</span><span id="settings-arrow">⌄</span>
+        </button>
+        <form id="settings-form" class="settings-form" hidden>
+          <label for="voice" data-i18n="settings.voice">SAPI voice</label><select id="voice" required></select>
+          <label for="rate"><span data-i18n="settings.speed">Speed</span> <output id="rate-value">0</output></label><input id="rate" type="range" min="-10" max="10" value="0" />
+          <label for="audio-output" data-i18n="settings.output">Audio output</label><select id="audio-output"></select>
+          <button class="secondary" type="submit" data-i18n="action.saveSettings">Save settings</button>
+        </form>
+      </section>
+      <section id="test-card" class="card test-card" hidden>
+        <span data-i18n="test.localMode">Local test mode</span><button id="test-voice" class="secondary" data-i18n="action.testVoice">Test voice</button>
+      </section>
+      <p id="error-message" class="error-message" role="alert"></p>
+      <div id="save-toast" class="save-toast" role="status" aria-live="polite" hidden>
+        <span aria-hidden="true">✓</span><span data-i18n="toast.settingsSaved">Settings saved</span>
+      </div>
+    </main>
+    <script src="renderer.js"></script>
+  </body>
+</html>

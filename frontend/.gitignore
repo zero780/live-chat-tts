@@ -1,0 +1,18 @@
+# Dependencies and local Node.js tooling
+/node_modules/
+/.tools/
+/.npm-cache/
+
+# Packaged artifacts and bundled runtime
+/dist/
+/release/
+/release-*/
+/runtime/
+/runtime-java21/
+/runtime-java21-final/
+
+# Local environment overrides and logs
+.env
+.env.*
+!.env.example
+npm-debug.log*

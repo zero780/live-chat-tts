@@ -1,0 +1,14 @@
+# Build output generated from this module
+/out/
+/build/
+/target/
+/dist/
+*.class
+
+# Local dependency cache and environment overrides
+/.maven-cache/
+/lib/*
+!/lib/.gitkeep
+.env
+.env.*
+!.env.example

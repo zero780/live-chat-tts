@@ -1,0 +1,46 @@
+# Java and Maven build output
+backend/target/
+backend/dist/
+backend/out/
+backend/targetclasses/
+backend/.maven-cache/
+
+# Electron, Node.js and packaging output
+frontend/node_modules/
+frontend/dist/
+frontend/runtime-java21-final/
+frontend/.tools/
+frontend/.cache/
+frontend/.electron/
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+*.keystore
+*.p12
+*.pfx
+*.pem
+
+# Local application data, logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.bak
+
+# IDE and editor files
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini

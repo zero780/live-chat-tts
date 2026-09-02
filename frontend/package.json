@@ -1,0 +1,55 @@
+{
+  "name": "live-chat-tts-desktop",
+  "version": "1.0.0",
+  "productName": "Live Chat TTS",
+  "author": "Fabrizio GC",
+  "license": "MIT",
+  "description": "Interfaz local y segura para Live Chat TTS",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "test:ui": "set LIVE_SOURCE=LOCAL_TEST&& electron .",
+    "postinstall": "electron-builder install-app-deps",
+    "dist": "electron-builder",
+    "dist-win": "electron-builder --windows"
+  },
+  "devDependencies": {
+    "electron": "44.1.1",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "com.comext.live-chat-tts",
+    "asar": true,
+    "artifactName": "Live-Chat-TTS-Setup-${version}.${ext}",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "icon": "src/assets/livechattts-logo.png",
+    "extraResources": [
+      {
+        "from": "../backend/dist/live-chat-tts.jar",
+        "to": "backend/live-chat-tts.jar"
+      },
+      {
+        "from": "runtime-java21-final",
+        "to": "jre",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Live Chat TTS"
+    }
+  }
+}
