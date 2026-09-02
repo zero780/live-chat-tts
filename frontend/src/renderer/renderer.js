@@ -199,12 +199,7 @@ elements.disconnect.addEventListener('click', async () => {
 elements.testVoice.addEventListener('click', async () => {
   try {
     showError();
-    const status = await window.desktop.status();
-    if (status.connection.state !== 'CONNECTED') {
-      await window.desktop.connect('prueba_local');
-      await refreshStatus();
-    }
-    await window.desktop.testMessage({ author: 'Prueba', text: 'La voz local está lista.' });
+    await window.desktop.testMessage({ author: 'Carolina', text: 'La voz local está lista.' });
   } catch (error) { showError(error); }
 });
 
@@ -214,7 +209,7 @@ translateDocument();
     const runtime = await window.desktop.start();
     runtimeSource = runtime.source;
     elements.mode.textContent = runtimeSource === 'LOCAL_TEST' ? t('mode.localTest') : t('mode.tiktok');
-    elements.testCard.hidden = runtime.source !== 'LOCAL_TEST';
+    elements.testCard.hidden = false;
     await loadSettings();
     await refreshStatus();
     setInterval(refreshStatus, 900);

@@ -10,6 +10,6 @@ if not exist "%JDK_HOME%\bin\jlink.exe" (
   exit /b 1
 )
 if exist "%RUNTIME_ROOT%" rmdir /s /q "%RUNTIME_ROOT%"
-"%JDK_HOME%\bin\jlink.exe" --module-path "%JDK_HOME%\jmods" --add-modules java.base,java.desktop,java.logging,java.management,java.naming,java.net.http,java.security.jgss,jdk.crypto.ec,jdk.unsupported --strip-debug --no-header-files --no-man-pages --compress=2 --output "%RUNTIME_ROOT%"
+"%JDK_HOME%\bin\jlink.exe" --module-path "%JDK_HOME%\jmods" --add-modules java.base,java.desktop,java.logging,java.management,java.naming,java.net.http,java.security.jgss,jdk.crypto.ec,jdk.httpserver,jdk.unsupported --strip-debug --no-header-files --no-man-pages --compress=2 --output "%RUNTIME_ROOT%"
 if errorlevel 1 exit /b %errorlevel%
 echo Runtime Java 21 preparado: %RUNTIME_ROOT%

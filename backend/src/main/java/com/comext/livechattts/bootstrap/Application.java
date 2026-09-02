@@ -25,9 +25,10 @@ public final class Application {
         var diagnostics = new RuntimeDiagnostics();
         var queue = new SpeechQueueService(config.queueCapacity(), speech, settings, diagnostics);
         var localLive = new LocalTestLiveChatClient();
+        localLive.setTestConsumer(queue::submit);
         LiveChatClient liveClient = config.liveSource() == LiveSource.TIKTOK_LIVE_JAVA ? new TikTokLiveJavaClient() : localLive;
         var connection = new LiveConnectionService(liveClient, queue, diagnostics);
-        var server = new LocalHttpServer(config.port(), connection, settings, new StatusService(connection, queue, diagnostics), config.liveSource() == LiveSource.LOCAL_TEST ? localLive : null, config.localApiToken());
+        var server = new LocalHttpServer(config.port(), connection, settings, new StatusService(connection, queue, diagnostics), localLive, config.localApiToken());
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { server.close(); queue.close(); }, "shutdown"));
         server.start();
         System.out.printf("Live Chat TTS local iniciado en http://127.0.0.1:%d/api/status%n", config.port());

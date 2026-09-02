@@ -57,7 +57,6 @@ public final class LocalHttpServer implements AutoCloseable {
         send(exchange, 200, settingsJson(settings.update(voiceId, rate == null ? current.speechRate() : rate, output)));
     }
     private void publishTestMessage(HttpExchange exchange) throws IOException {
-        if (testClient == null) throw new IllegalArgumentException("La inyeccion de prueba solo esta disponible con LIVE_SOURCE=LOCAL_TEST");
         String json = body(exchange); boolean accepted = testClient.publish(required(json, "author"), required(json, "text"));
         if (!accepted) {
             send(exchange, 409, Map.of("error", "Conecta primero la sesi\u00f3n local antes de enviar una prueba."));
