@@ -113,7 +113,7 @@ Las salidas son:
 - `backend/dist/live-chat-tts.jar`: JAR sombreado con TikTokLiveJava, JLayer y el MP3 de alerta de regalo incluido.
 - `frontend/dist/Live-Chat-TTS-Setup-<version>.exe`: instalador NSIS de Windows con Electron, el JAR y el runtime reducido de Java.
 
-El instalador incluye el runtime Python de Piper y el modelo de voz `es_MX-claude-high`. Piper es el motor predeterminado; define `TTS_ENGINE=SAPI` solo cuando necesites el respaldo de Windows SAPI.
+El instalador incluye el ejecutable nativo de Piper para Windows, sus DLL y el modelo de voz `es_MX-claude-high`. No se necesita instalar Python. Piper es el motor predeterminado; define `TTS_ENGINE=SAPI` solo cuando necesites el respaldo de Windows SAPI.
 
 ## Seguridad, privacidad y control de recursos
 

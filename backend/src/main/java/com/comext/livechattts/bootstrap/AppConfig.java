@@ -24,12 +24,11 @@ public record AppConfig(Platform platform, LiveSource liveSource, TtsEngine ttsE
         return (localAppData == null || localAppData.isBlank() ? Path.of(System.getProperty("user.home"), "AppData", "Local") : Path.of(localAppData)).resolve("LiveChatTTS");
     }
 
-    public record PiperRuntime(String pythonCommand, Path workerScript, Path modelPath) {
+    public record PiperRuntime(Path executable, Path modelPath) {
         public static PiperRuntime fromEnvironment() {
-            String python = value("PIPER_PYTHON", "py");
-            Path worker = path("PIPER_WORKER", Path.of("backend", "piper", "piper_worker.py"));
+            Path executable = path("PIPER_EXECUTABLE", Path.of("backend", "piper-native", "piper", "piper.exe"));
             Path model = path("PIPER_MODEL", Path.of("backend", "piper", "models", "es_MX-claude-high.onnx"));
-            return new PiperRuntime(python, worker, model);
+            return new PiperRuntime(executable, model);
         }
 
         private static String value(String name, String fallback) {

@@ -164,6 +164,7 @@ async function refreshStatus() {
     const connected = connection.state === 'CONNECTED' || connection.state === 'CONNECTING';
     elements.disconnect.hidden = !connected;
     elements.connect.hidden = connected;
+    elements.connect.disabled = connected || isBusy;
   } catch (error) { showError(error); }
   finally { statusRefreshInFlight = false; }
 }
@@ -194,16 +195,27 @@ elements.form.addEventListener('submit', async (event) => {
     showSaved();
   } catch (error) { showError(error); }
 });
-elements.connect.addEventListener('click', async () => {
+async function connectFromInput() {
+  if (isBusy || !elements.connect.hidden) {
+    // The status refresh is authoritative; avoid duplicate connection requests.
+    if (isBusy) return;
+  }
   try {
     const username = elements.username.value.trim().replace(/^@/, '');
-    if (!username) throw new Error(t('error.usernameRequired'));
+    if (username.length < 2) throw new Error(t('error.usernameRequired'));
     setBusy(true);
     showError();
     await window.desktop.connect(username);
     await refreshStatus();
     showError();
   } catch (error) { showError(error); } finally { setBusy(false); }
+}
+elements.connect.addEventListener('click', connectFromInput);
+elements.username.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && elements.username.value.trim().replace(/^@/, '').length > 1) {
+    event.preventDefault();
+    if (!elements.connect.hidden && !isBusy) connectFromInput();
+  }
 });
 elements.disconnect.addEventListener('click', async () => {
   try {

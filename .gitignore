@@ -4,15 +4,21 @@ backend/dist/
 backend/out/
 backend/targetclasses/
 backend/.maven-cache/
+backend/.m2repo/
+backend/apache-maven-*/
 backend/piper-runtime/
 backend/piper-runtime-standalone/
+backend/piper-native/
+backend/piper-windows-amd64.zip
 backend/piper/models/
 backend/piper/output/
+backend/piper/native-test/
 
 # Electron, Node.js and packaging output
 frontend/node_modules/
 frontend/dist/
 frontend/dist-staging*/
+frontend/dist-v*/
 frontend/runtime-java21-final/
 frontend/.tools/
 frontend/.cache/

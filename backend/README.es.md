@@ -60,8 +60,7 @@ Toda la configuración llega mediante variables de entorno. No se guardan creden
 | `APP_PLATFORM` | `WINDOWS` | Plataforma soportada actualmente. |
 | `LIVE_SOURCE` | `LOCAL_TEST` | `LOCAL_TEST` para pruebas offline o `TIKTOK_LIVE_JAVA` para comentarios reales. |
 | `TTS_ENGINE` | `PIPER` | `PIPER` de forma predeterminada, o `SAPI` como respaldo explícito. |
-| `PIPER_PYTHON` | `py` | Comando Python usado por el trabajador Piper local. |
-| `PIPER_WORKER` | `backend/piper/piper_worker.py` | Script del trabajador Piper persistente. |
+| `PIPER_EXECUTABLE` | `backend/piper-native/piper/piper.exe` | Ejecutable nativo portable de Piper. |
 | `PIPER_MODEL` | `backend/piper/models/es_MX-claude-high.onnx` | Modelo local de voz Piper. |
 | `APP_PORT` | `8787` | Puerto HTTP de loopback, 1024-65535. |
 | `LOCAL_API_TOKEN` | vacío | Si se define, las rutas requieren `X-Local-Api-Token`. Electron lo genera por ejecución. |
@@ -100,10 +99,10 @@ run-jar.bat
 
 ## Piper TTS local
 
-Piper está disponible como motor de voz completamente local. Instala el runtime aislado y la voz mexicana `es_MX-claude-high`:
+Piper está disponible como motor de voz completamente local. El binario portable de Windows y la voz mexicana `es_MX-claude-high` se incluyen para desarrollo y producción:
 
 ```bat
-setup-piper.bat
+Verifica que existan `backend/piper-native/piper/piper.exe` y el modelo.
 ```
 
 Luego inicia la interfaz desde `frontend\\` con Piper activado:
@@ -112,7 +111,7 @@ Luego inicia la interfaz desde `frontend\\` con Piper activado:
 test-piper-ui.bat
 ```
 
-El trabajador carga la voz ONNX una sola vez y transmite audio PCM a Java. Piper se selecciona si `TTS_ENGINE` no se define; usa `TTS_ENGINE=SAPI` para el respaldo. El instalador de producción incluye el runtime Python y el modelo de Piper, mientras Git ignora las copias locales de desarrollo.
+El proceso nativo de Piper permanece activo durante la sesión y se reinicia automáticamente si deja de responder. Piper se selecciona si `TTS_ENGINE` no se define; usa `TTS_ENGINE=SAPI` para el respaldo. No se necesita instalar Python ni un entorno virtual.
 
 Mide el tiempo de síntesis sin reproducir audio:
 

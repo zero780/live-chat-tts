@@ -75,7 +75,7 @@ El frontend usa `TIKTOK_LIVE_JAVA` por defecto; `test-ui.bat` lo cambia a `LOCAL
 
 ### Usar Piper localmente
 
-Después de ejecutar `backend\\setup-piper.bat`, inicia la misma interfaz con la voz local Piper `es_MX-claude-high`:
+Con los archivos portables de Piper disponibles en `backend/piper-native/`, inicia la interfaz con la voz local `es_MX-claude-high`:
 
 ```bat
 test-piper-ui.bat
@@ -99,7 +99,7 @@ Electron Builder usa `asar`, `extraResources` y destino NSIS. El instalador incl
 - `backend/live-chat-tts.jar` fuera de `app.asar`.
 - `jre/` con el runtime Java 21 reducido.
 
-El instalador incluye el runtime Python de Piper y el modelo de voz `es_MX-claude-high`, por lo que el equipo destino no necesita instalar Piper por separado.
+El instalador incluye el ejecutable nativo de Piper para Windows, sus DLL y el modelo `es_MX-claude-high`, por lo que el equipo destino no necesita Python ni instalar Piper por separado.
 
 Por defecto, el instalador queda en `dist\\`.
 

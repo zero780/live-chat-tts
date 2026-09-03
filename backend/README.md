@@ -62,8 +62,7 @@ All configuration is supplied through environment variables. No credentials or t
 | `APP_PLATFORM` | `WINDOWS` | Current supported platform. |
 | `LIVE_SOURCE` | `LOCAL_TEST` | `LOCAL_TEST` for offline smoke tests or `TIKTOK_LIVE_JAVA` for real comments. |
 | `TTS_ENGINE` | `PIPER` | `PIPER` by default, or `SAPI` as an explicit fallback. |
-| `PIPER_PYTHON` | `py` | Python command used by the local Piper worker. |
-| `PIPER_WORKER` | `backend/piper/piper_worker.py` | Persistent Piper worker script. |
+| `PIPER_EXECUTABLE` | `backend/piper-native/piper/piper.exe` | Portable native Piper executable. |
 | `PIPER_MODEL` | `backend/piper/models/es_MX-claude-high.onnx` | Local Piper voice model. |
 | `APP_PORT` | `8787` | Loopback HTTP port, 1024-65535. |
 | `LOCAL_API_TOKEN` | empty | If set, API calls require `X-Local-Api-Token`. The Electron parent generates it per run. |
@@ -102,10 +101,10 @@ run-jar.bat
 
 ## Local Piper TTS
 
-Piper is available as a fully local speech engine. Install the isolated runtime and the Mexican Spanish `es_MX-claude-high` voice:
+Piper is available as a fully local speech engine. The Windows portable binary and Mexican Spanish `es_MX-claude-high` voice are bundled for development and production:
 
 ```bat
-setup-piper.bat
+Ensure `backend/piper-native/piper/piper.exe` and the model are present.
 ```
 
 Then launch the Electron UI from `frontend\\` with Piper enabled:
@@ -114,7 +113,7 @@ Then launch the Electron UI from `frontend\\` with Piper enabled:
 test-piper-ui.bat
 ```
 
-The worker loads the ONNX voice once and streams PCM audio to Java. Piper is selected when `TTS_ENGINE` is unset; set `TTS_ENGINE=SAPI` to use the fallback. The production installer bundles the Python runtime and Piper model, while Git ignores local development copies.
+The native Piper process is kept alive during the session and restarted automatically if it stops responding. Piper is selected when `TTS_ENGINE` is unset; set `TTS_ENGINE=SAPI` to use the fallback. No Python installation or virtual environment is required.
 
 Measure synthesis time without audio playback:
 

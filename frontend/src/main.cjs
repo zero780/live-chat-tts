@@ -29,8 +29,7 @@ function backendArguments(jar) { return ['-jar', jar]; }
 function piperPaths() {
   const root = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, '..', '..', 'backend');
   return {
-    python: path.join(root, 'piper-runtime', 'python.exe'),
-    worker: path.join(root, 'piper', 'piper_worker.py'),
+    executable: app.isPackaged ? path.join(root, 'piper-native', 'piper.exe') : path.join(root, 'piper-native', 'piper', 'piper.exe'),
     model: path.join(root, 'piper', 'models', 'es_MX-claude-high.onnx')
   };
 }
@@ -63,8 +62,7 @@ async function startBackend() {
       LOCAL_API_TOKEN: token,
       LIVE_SOURCE: source,
       TTS_ENGINE: process.env.TTS_ENGINE || 'PIPER',
-      PIPER_PYTHON: process.env.PIPER_PYTHON || piper.python,
-      PIPER_WORKER: process.env.PIPER_WORKER || piper.worker,
+      PIPER_EXECUTABLE: process.env.PIPER_EXECUTABLE || piper.executable,
       PIPER_MODEL: process.env.PIPER_MODEL || piper.model
     }
   });

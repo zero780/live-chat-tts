@@ -113,7 +113,7 @@ Outputs:
 - `backend/dist/live-chat-tts.jar`: shaded backend JAR with TikTokLiveJava, JLayer and the bundled gift-alert MP3.
 - `frontend/dist/Live-Chat-TTS-Setup-<version>.exe`: Windows NSIS installer containing Electron, the JAR and the reduced Java runtime.
 
-The installer bundles Piper's Python runtime and the `es_MX-claude-high` voice model. Piper is the default speech engine; set `TTS_ENGINE=SAPI` only when the Windows SAPI fallback is required.
+The installer bundles Piper's native Windows executable, required DLLs and the `es_MX-claude-high` voice model. No Python installation is required. Piper is the default speech engine; set `TTS_ENGINE=SAPI` only when the Windows SAPI fallback is required.
 
 ## Security, privacy and resource controls
 

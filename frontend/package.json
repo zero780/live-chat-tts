@@ -40,19 +40,13 @@
         ]
       },
       {
-        "from": "../backend/piper/piper_worker.py",
-        "to": "piper/piper_worker.py"
+        "from": "../backend/piper-native/piper",
+        "to": "piper-native",
+        "filter": ["**/*"]
       },
       {
         "from": "../backend/piper/models",
         "to": "piper/models",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "../backend/piper-runtime",
-        "to": "piper-runtime",
         "filter": [
           "**/*"
         ]
