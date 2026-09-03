@@ -66,6 +66,14 @@ public final class SpeechQueueService implements AutoCloseable {
         return true;
     }
 
+    /** Removes messages that have not started speaking while retaining their history entries. */
+    public int discardPending() {
+        List<QueuedMessage> pending = new ArrayList<>();
+        queue.drainTo(pending);
+        pending.forEach(message -> updateState(message.id(), "CANCELLED"));
+        return pending.size();
+    }
+
     private void consume() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
@@ -119,6 +127,7 @@ public final class SpeechQueueService implements AutoCloseable {
     }
 
     @Override public void close() {
+        discardPending();
         worker.shutdownNow();
         if (speechEngine instanceof AutoCloseable closeable) {
             try { closeable.close(); }

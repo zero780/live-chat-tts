@@ -23,7 +23,7 @@ public final class TikTokLiveJavaClient implements LiveChatClient {
                 .onComment((liveClient, event) -> publish(onMessage, displayName(event.getUser()), event.getText(), ChatMessage.Type.CHAT))
                 .onGift((liveClient, event) -> {
                     int quantity = Math.max(1, event.getCombo());
-                    publish(onMessage, displayName(event.getUser()), "ha enviado el regalo " + event.getGift().getName() + " por " + quantity, ChatMessage.Type.EVENT);
+                    publish(onMessage, displayName(event.getUser()), "ha enviado un regalo " + event.getGift().getName() + " por " + quantity, ChatMessage.Type.EVENT);
                 })
                 .onFollow((liveClient, event) -> publish(onMessage, displayName(event.getUser()), "ahora sigue el canal", ChatMessage.Type.EVENT))
                 .onSubscribe((liveClient, event) -> publish(onMessage, displayName(event.getUser()), "se ha suscrito al canal", ChatMessage.Type.EVENT))
@@ -56,7 +56,10 @@ public final class TikTokLiveJavaClient implements LiveChatClient {
     }
 
     private String displayName(User user) {
-        if (user == null || user.getName() == null || user.getName().isBlank()) return "Usuario";
-        return user.getName();
+        if (user == null) return "Usuario";
+        String profileName = user.getProfileName();
+        if (profileName != null && !profileName.isBlank()) return profileName;
+        String username = user.getName();
+        return username == null || username.isBlank() ? "Usuario" : username;
     }
 }

@@ -11,7 +11,7 @@ const translations = {
     'metric.queue': 'In queue', 'metric.read': 'Read', 'metric.protected': 'Protected',
     'settings.title': '⚙ Voice settings', 'settings.voice': 'SAPI voice', 'settings.speed': 'Speed', 'settings.output': 'Audio output',
     'test.localMode': 'Local test mode', 'toast.settingsSaved': 'Settings saved',
-    'message.user': 'User', 'message.queued': 'In queue', 'message.speaking': 'Speaking', 'message.spoken': 'Read', 'message.dropped': 'Dropped', 'message.rejected': 'Protected', 'message.failed': 'Error',
+    'message.user': 'User', 'message.queued': 'In queue', 'message.speaking': 'Speaking', 'message.spoken': 'Read', 'message.dropped': 'Dropped', 'message.rejected': 'Protected', 'message.cancelled': 'Skipped', 'message.failed': 'Error',
     'error.usernameRequired': 'Enter your TikTok username.', 'error.startFailed': 'Could not start the application.'
   },
   es: {
@@ -26,7 +26,7 @@ const translations = {
     'metric.queue': 'En cola', 'metric.read': 'Leídos', 'metric.protected': 'Protegidos',
     'settings.title': '⚙ Ajustes de voz', 'settings.voice': 'Voz SAPI', 'settings.speed': 'Velocidad', 'settings.output': 'Salida de audio',
     'test.localMode': 'Modo prueba local', 'toast.settingsSaved': 'Ajustes guardados',
-    'message.user': 'Usuario', 'message.queued': 'En cola', 'message.speaking': 'Reproduciendo', 'message.spoken': 'Leído', 'message.dropped': 'Descartado', 'message.rejected': 'Protegido', 'message.failed': 'Error',
+    'message.user': 'Usuario', 'message.queued': 'En cola', 'message.speaking': 'Reproduciendo', 'message.spoken': 'Leído', 'message.dropped': 'Descartado', 'message.rejected': 'Protegido', 'message.cancelled': 'Omitido', 'message.failed': 'Error',
     'error.usernameRequired': 'Escribe tu usuario de TikTok.', 'error.startFailed': 'No se pudo iniciar la aplicación.'
   }
 };
@@ -88,7 +88,7 @@ function option(select, value, text) {
 }
 
 function messageState(state) {
-  return t({ QUEUED: 'message.queued', SPEAKING: 'message.speaking', SPOKEN: 'message.spoken', DROPPED: 'message.dropped', REJECTED: 'message.rejected', FAILED: 'message.failed' }[state] || state);
+  return t({ QUEUED: 'message.queued', SPEAKING: 'message.speaking', SPOKEN: 'message.spoken', DROPPED: 'message.dropped', REJECTED: 'message.rejected', CANCELLED: 'message.cancelled', FAILED: 'message.failed' }[state] || state);
 }
 
 function renderMessages(messages) {

@@ -40,6 +40,7 @@ graph LR
 | `adapter/in/http` | API JSON estricta, local y exclusiva para la interfaz. |
 | `adapter/out/live` | Implementaciones TikTokLiveJava y prueba local. |
 | `adapter/out/windows` | Voces SAPI y salida de audio predeterminada de Windows. |
+| `adapter/out/piper` | Trabajador Piper local persistente y reproducción PCM. |
 | `bootstrap` | Configuración por entorno y ensamblaje de dependencias. |
 
 ## Requisitos
@@ -57,6 +58,10 @@ Toda la configuración llega mediante variables de entorno. No se guardan creden
 | --- | --- | --- |
 | `APP_PLATFORM` | `WINDOWS` | Plataforma soportada actualmente. |
 | `LIVE_SOURCE` | `LOCAL_TEST` | `LOCAL_TEST` para pruebas offline o `TIKTOK_LIVE_JAVA` para comentarios reales. |
+| `TTS_ENGINE` | `SAPI` | `SAPI` o `PIPER`. |
+| `PIPER_PYTHON` | `py` | Comando Python usado por el trabajador Piper local. |
+| `PIPER_WORKER` | `backend/piper/piper_worker.py` | Script del trabajador Piper persistente. |
+| `PIPER_MODEL` | `backend/piper/models/es_MX-claude-high.onnx` | Modelo local de voz Piper. |
 | `APP_PORT` | `8787` | Puerto HTTP de loopback, 1024-65535. |
 | `LOCAL_API_TOKEN` | vacío | Si se define, las rutas requieren `X-Local-Api-Token`. Electron lo genera por ejecución. |
 | `SPEECH_QUEUE_CAPACITY` | `200` | Mensajes pendientes, limitado para proteger la memoria. |
@@ -90,6 +95,28 @@ Ejecutar una conexión real manualmente (normalmente lo hace Electron):
 ```bat
 set LIVE_SOURCE=TIKTOK_LIVE_JAVA
 run-jar.bat
+```
+
+## Evaluación de Piper
+
+Piper es opcional y se ejecuta completamente local tras la instalación inicial. Instala el runtime aislado de evaluación y la voz mexicana `es_MX-claude-high`:
+
+```bat
+setup-piper.bat
+```
+
+Luego inicia la interfaz de evaluación desde `frontend\\`:
+
+```bat
+test-piper-ui.bat
+```
+
+El trabajador carga la voz ONNX una sola vez y transmite audio PCM a Java. El runtime Python y el modelo descargado están ignorados por Git y aún no forman parte del instalador de producción.
+
+Mide el tiempo de síntesis sin reproducir audio:
+
+```bat
+benchmark-piper.bat
 ```
 
 ## API local

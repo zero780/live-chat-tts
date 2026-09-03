@@ -68,6 +68,16 @@ run.bat
 
 The frontend defaults to `TIKTOK_LIVE_JAVA`; `test-ui.bat` overrides it to `LOCAL_TEST`.
 
+### Piper evaluation
+
+After running `backend\\setup-piper.bat`, launch the same UI with the local Piper `es_MX-claude-high` voice:
+
+```bat
+test-piper-ui.bat
+```
+
+This evaluation script sets `TTS_ENGINE=PIPER`; it does not build an installer or change the default SAPI engine.
+
 ## Production build
 
 Build the backend first from `backend\\` with `build.bat`. Then create the Java runtime and Windows installer:

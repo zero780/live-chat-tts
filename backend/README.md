@@ -8,7 +8,7 @@
 [![Architecture](https://img.shields.io/badge/Architecture-Hexagonal-6f42c1?style=flat)](#architecture)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078d4?style=flat&logo=windows)](#requirements)
 
-Local Java 21 service that receives TikTok LIVE comments through TikTokLiveJava and reads them with Windows SAPI. The service is designed to be launched by the Electron desktop frontend; it binds its HTTP control API to loopback only.
+Local Java 21 service that receives TikTok LIVE comments through TikTokLiveJava and reads them with Windows SAPI or local Piper TTS. The service is designed to be launched by the Electron desktop frontend; it binds its HTTP control API to loopback only.
 
 > TikTokLiveJava is an unofficial reverse-engineering project. Review its license and TikTok rules before connecting to a real LIVE. This adapter only listens to comments; it does not send chat messages, use cookies, rotate identities/IPs, or implement aggressive reconnect loops.
 
@@ -25,7 +25,7 @@ graph LR
   APP --> LIVE[LiveChatClient port]
   LIVE --> TT[TikTokLiveJava adapter]
   Q --> SAPI[SpeechEngine port]
-  SAPI --> PS[Windows SAPI / PowerShell]
+  SAPI --> PS[Windows SAPI / PowerShell or local Piper]
   APP --> STORE[SettingsStore port]
   STORE --> FILE[Local settings file]
 ```
@@ -40,6 +40,7 @@ graph LR
 | `adapter/in/http` | Strict, local-only JSON API for the desktop UI. |
 | `adapter/out/live` | TikTokLiveJava and local test implementations. |
 | `adapter/out/windows` | SAPI voices and the Windows default audio output. |
+| `adapter/out/piper` | Persistent local Piper worker and PCM playback. |
 | `bootstrap` | Environment configuration and dependency wiring. |
 
 ## Requirements
@@ -57,6 +58,10 @@ All configuration is supplied through environment variables. No credentials or t
 | --- | --- | --- |
 | `APP_PLATFORM` | `WINDOWS` | Current supported platform. |
 | `LIVE_SOURCE` | `LOCAL_TEST` | `LOCAL_TEST` for offline smoke tests or `TIKTOK_LIVE_JAVA` for real comments. |
+| `TTS_ENGINE` | `SAPI` | `SAPI` or `PIPER`. |
+| `PIPER_PYTHON` | `py` | Python command used by the local Piper worker. |
+| `PIPER_WORKER` | `backend/piper/piper_worker.py` | Persistent Piper worker script. |
+| `PIPER_MODEL` | `backend/piper/models/es_MX-claude-high.onnx` | Local Piper voice model. |
 | `APP_PORT` | `8787` | Loopback HTTP port, 1024-65535. |
 | `LOCAL_API_TOKEN` | empty | If set, API calls require `X-Local-Api-Token`. The Electron parent generates it per run. |
 | `SPEECH_QUEUE_CAPACITY` | `200` | Pending messages, bounded to protect memory. |
@@ -90,6 +95,28 @@ Run a real connection manually (the frontend normally starts this for you):
 ```bat
 set LIVE_SOURCE=TIKTOK_LIVE_JAVA
 run-jar.bat
+```
+
+## Piper evaluation
+
+Piper is optional and remains fully local after its initial setup. Install the isolated evaluation runtime and the Mexican Spanish `es_MX-claude-high` voice:
+
+```bat
+setup-piper.bat
+```
+
+Then launch the Electron evaluation UI from `frontend\\`:
+
+```bat
+test-piper-ui.bat
+```
+
+The worker loads the ONNX voice once and streams PCM audio to Java. Its Python runtime and downloaded model are ignored by Git and are not yet bundled into the production installer.
+
+Measure synthesis time without audio playback:
+
+```bat
+benchmark-piper.bat
 ```
 
 ## Local API
