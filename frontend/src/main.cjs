@@ -26,6 +26,15 @@ function javaCommand() {
 
 function backendArguments(jar) { return ['-jar', jar]; }
 
+function piperPaths() {
+  const root = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, '..', '..', 'backend');
+  return {
+    python: path.join(root, 'piper-runtime', 'python.exe'),
+    worker: path.join(root, 'piper', 'piper_worker.py'),
+    model: path.join(root, 'piper', 'models', 'es_MX-claude-high.onnx')
+  };
+}
+
 function freeLoopbackPort() {
   return new Promise((resolve, reject) => {
     const probe = http.createServer();
@@ -45,9 +54,19 @@ async function startBackend() {
   const port = await freeLoopbackPort();
   const token = crypto.randomBytes(32).toString('base64url');
   const source = process.env.LIVE_SOURCE === 'LOCAL_TEST' ? 'LOCAL_TEST' : 'TIKTOK_LIVE_JAVA';
+  const piper = piperPaths();
   const child = spawn(javaCommand(), backendArguments(jar), {
     windowsHide: true,
-    env: { ...process.env, APP_PORT: String(port), LOCAL_API_TOKEN: token, LIVE_SOURCE: source }
+    env: {
+      ...process.env,
+      APP_PORT: String(port),
+      LOCAL_API_TOKEN: token,
+      LIVE_SOURCE: source,
+      TTS_ENGINE: process.env.TTS_ENGINE || 'PIPER',
+      PIPER_PYTHON: process.env.PIPER_PYTHON || piper.python,
+      PIPER_WORKER: process.env.PIPER_WORKER || piper.worker,
+      PIPER_MODEL: process.env.PIPER_MODEL || piper.model
+    }
   });
   backend = { child, port, token, source, lastProcessError: '', info() { return { running: true, source: this.source, port: this.port }; } };
   child.stderr.on('data', (chunk) => { backend.lastProcessError = String(chunk).slice(-500); });

@@ -26,6 +26,11 @@
   </repositories>
   <dependencies>
     <dependency>
+      <groupId>javazoom</groupId>
+      <artifactId>jlayer</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+    <dependency>
       <groupId>com.github.jwdeveloper.TikTok-Live-Java</groupId>
       <artifactId>Client</artifactId>
       <version>1.11.0-Release</version>

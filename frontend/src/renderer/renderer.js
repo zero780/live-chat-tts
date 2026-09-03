@@ -3,14 +3,14 @@ const translations = {
     'language.switchTo': 'Switch to Spanish',
     'mode.starting': 'Starting', 'mode.localTest': 'Local test', 'mode.tiktok': 'TikTok',
     'voice.status': 'Voice status',
-    'connection.preparing': 'Preparing local backend', 'connection.localReady': 'Speech will work without cloud services.',
+    'connection.preparing': 'Preparing local service', 'connection.localReady': 'Speech will work without cloud services.',
     'connection.connectedTo': 'Connected to @{username}', 'connection.connecting': 'Connecting to LIVE', 'connection.error': 'Connection error', 'connection.disconnected': 'Disconnected', 'connection.ready': 'Ready to start.',
     'form.tiktokUsername': 'TikTok username', 'form.usernamePlaceholder': 'your_username',
     'action.connect': 'Connect', 'action.connecting': 'Connecting…', 'action.disconnect': 'Disconnect', 'action.saveSettings': 'Save settings', 'action.testVoice': 'Test voice',
     'activity.label': 'Activity', 'activity.title': 'LIVE activity', 'activity.lastMessages': 'Last 100 messages', 'activity.empty': 'LIVE messages will appear here.',
     'metric.queue': 'In queue', 'metric.read': 'Read', 'metric.protected': 'Protected',
-    'settings.title': '⚙ Voice settings', 'settings.voice': 'SAPI voice', 'settings.speed': 'Speed', 'settings.output': 'Audio output',
-    'test.localMode': 'Local test mode', 'toast.settingsSaved': 'Settings saved',
+    'settings.title': '⚙️ Voice settings', 'settings.voice': 'Narrator', 'settings.speed': 'Speed', 'settings.output': 'Audio output',
+    'test.localMode': '🔊 Local voice test', 'toast.settingsSaved': 'Settings saved',
     'message.user': 'User', 'message.queued': 'In queue', 'message.speaking': 'Speaking', 'message.spoken': 'Read', 'message.dropped': 'Dropped', 'message.rejected': 'Protected', 'message.cancelled': 'Skipped', 'message.failed': 'Error',
     'error.usernameRequired': 'Enter your TikTok username.', 'error.startFailed': 'Could not start the application.'
   },
@@ -18,14 +18,14 @@ const translations = {
     'language.switchTo': 'Cambiar a inglés',
     'mode.starting': 'Iniciando', 'mode.localTest': 'Prueba local', 'mode.tiktok': 'TikTok',
     'voice.status': 'Estado de la voz',
-    'connection.preparing': 'Preparando backend local', 'connection.localReady': 'La voz funcionará sin servicios en la nube.',
+    'connection.preparing': 'Preparando servicio local', 'connection.localReady': 'La voz funcionará sin servicios en la nube.',
     'connection.connectedTo': 'Conectado a @{username}', 'connection.connecting': 'Conectando al LIVE', 'connection.error': 'Error de conexión', 'connection.disconnected': 'Sin conexión', 'connection.ready': 'Listo para iniciar.',
     'form.tiktokUsername': 'Usuario de TikTok', 'form.usernamePlaceholder': 'tu_usuario',
     'action.connect': 'Conectar', 'action.connecting': 'Conectando…', 'action.disconnect': 'Desconectar', 'action.saveSettings': 'Guardar ajustes', 'action.testVoice': 'Probar voz',
     'activity.label': 'Actividad', 'activity.title': 'Actividad del LIVE', 'activity.lastMessages': 'Últimos 100 mensajes', 'activity.empty': 'Los mensajes del LIVE aparecerán aquí.',
     'metric.queue': 'En cola', 'metric.read': 'Leídos', 'metric.protected': 'Protegidos',
-    'settings.title': '⚙ Ajustes de voz', 'settings.voice': 'Voz SAPI', 'settings.speed': 'Velocidad', 'settings.output': 'Salida de audio',
-    'test.localMode': 'Modo prueba local', 'toast.settingsSaved': 'Ajustes guardados',
+    'settings.title': '⚙️ Ajustes', 'settings.voice': 'Narrador', 'settings.speed': 'Velocidad', 'settings.output': 'Salida de audio',
+    'test.localMode': '🔊 Prueba de voz local', 'toast.settingsSaved': 'Ajustes guardados',
     'message.user': 'Usuario', 'message.queued': 'En cola', 'message.speaking': 'Reproduciendo', 'message.spoken': 'Leído', 'message.dropped': 'Descartado', 'message.rejected': 'Protegido', 'message.cancelled': 'Omitido', 'message.failed': 'Error',
     'error.usernameRequired': 'Escribe tu usuario de TikTok.', 'error.startFailed': 'No se pudo iniciar la aplicación.'
   }
@@ -33,7 +33,7 @@ const translations = {
 
 const elements = {
   username: document.querySelector('#username'), connect: document.querySelector('#connect-button'), disconnect: document.querySelector('#disconnect-button'),
-  state: document.querySelector('#connection-state'), detail: document.querySelector('#connection-detail'), orb: document.querySelector('#voice-orb'),
+  state: document.querySelector('#connection-state'), detail: document.querySelector('#connection-detail'), orb: document.querySelector('#voice-orb'), streamerAvatar: document.querySelector('#streamer-avatar'),
   queue: document.querySelector('#queue-depth'), accepted: document.querySelector('#accepted-count'), dropped: document.querySelector('#dropped-count'),
   toggle: document.querySelector('#settings-toggle'), arrow: document.querySelector('#settings-arrow'), form: document.querySelector('#settings-form'), voice: document.querySelector('#voice'),
   rate: document.querySelector('#rate'), rateValue: document.querySelector('#rate-value'), output: document.querySelector('#audio-output'), error: document.querySelector('#error-message'), mode: document.querySelector('#mode-badge'), testCard: document.querySelector('#test-card'), testVoice: document.querySelector('#test-voice'), toast: document.querySelector('#save-toast'), chatList: document.querySelector('#chat-list'), chatEmpty: document.querySelector('#chat-empty'), chatCount: document.querySelector('#chat-count'), language: document.querySelector('#language-toggle'), languageFlag: document.querySelector('#language-flag')
@@ -47,6 +47,7 @@ let lastMessages = [];
 let isBusy = false;
 let runtimeSource = '';
 let statusRefreshInFlight = false;
+const defaultAvatar = '../assets/user_default.jpg';
 
 function t(key, values = {}) {
   return (translations[language][key] || translations.en[key] || key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? '');
@@ -66,6 +67,14 @@ function translateDocument() {
 }
 
 function showError(error = '') { elements.error.textContent = error instanceof Error ? error.message : error; }
+function setStreamerAvatar(url) {
+  if (!url) { elements.streamerAvatar.src = defaultAvatar; return; }
+  try {
+    const parsed = new URL(url);
+    const trustedHost = parsed.protocol === 'https:' && /(^|\.)tiktokcdn\.com$|(^|\.)ibytedtos\.com$|(^|\.)ibyteimg\.com$/i.test(parsed.hostname);
+    elements.streamerAvatar.src = trustedHost ? parsed.href : defaultAvatar;
+  } catch (_) { elements.streamerAvatar.src = defaultAvatar; }
+}
 function showSaved() {
   clearTimeout(toastTimer);
   elements.toast.hidden = false;
@@ -143,8 +152,10 @@ async function refreshStatus() {
   try {
     const status = await window.desktop.status();
     const connection = status.connection;
+    setStreamerAvatar(connection.avatarUrl);
     elements.state.textContent = connection.state === 'CONNECTED' ? t('connection.connectedTo', { username: connection.username }) : connection.state === 'CONNECTING' ? t('connection.connecting') : connection.state === 'ERROR' ? t('connection.error') : t('connection.disconnected');
     elements.detail.textContent = status.lastError || connection.detail || t('connection.ready');
+    if (connection.state === 'CONNECTED') showError();
     elements.orb.classList.toggle('speaking', Boolean(status.speaking));
     elements.queue.textContent = status.queueDepth;
     elements.accepted.textContent = status.acceptedMessages;
@@ -191,6 +202,7 @@ elements.connect.addEventListener('click', async () => {
     showError();
     await window.desktop.connect(username);
     await refreshStatus();
+    showError();
   } catch (error) { showError(error); } finally { setBusy(false); }
 });
 elements.disconnect.addEventListener('click', async () => {

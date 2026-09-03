@@ -7,5 +7,13 @@ public interface ConnectionUseCase {
     void disconnect();
     ConnectionSnapshot snapshot();
 
-    record ConnectionSnapshot(ConnectionState state, String username, String detail) { }
+    record ConnectionSnapshot(ConnectionState state, String username, String detail, String avatarUrl) {
+        public ConnectionSnapshot(ConnectionState state, String username, String detail) {
+            this(state, username, detail, "");
+        }
+
+        public ConnectionSnapshot {
+            avatarUrl = avatarUrl == null ? "" : avatarUrl.trim();
+        }
+    }
 }

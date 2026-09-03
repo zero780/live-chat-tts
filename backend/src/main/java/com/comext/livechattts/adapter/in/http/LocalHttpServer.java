@@ -4,6 +4,7 @@ import com.comext.livechattts.adapter.out.live.LocalTestLiveChatClient;
 import com.comext.livechattts.application.port.in.ConnectionUseCase;
 import com.comext.livechattts.application.port.in.SpeechSettingsUseCase;
 import com.comext.livechattts.application.port.in.StatusUseCase;
+import com.comext.livechattts.domain.ChatMessage;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
@@ -57,7 +58,7 @@ public final class LocalHttpServer implements AutoCloseable {
         send(exchange, 200, settingsJson(settings.update(voiceId, rate == null ? current.speechRate() : rate, output)));
     }
     private void publishTestMessage(HttpExchange exchange) throws IOException {
-        String json = body(exchange); boolean accepted = testClient.publish(required(json, "author"), required(json, "text"));
+        String json = body(exchange); boolean accepted = testClient.publish(required(json, "author"), required(json, "text"), messageType(json));
         if (!accepted) {
             send(exchange, 409, Map.of("error", "Conecta primero la sesi\u00f3n local antes de enviar una prueba."));
             return;
@@ -67,8 +68,14 @@ public final class LocalHttpServer implements AutoCloseable {
     private boolean authorized(HttpExchange exchange) { String supplied = exchange.getRequestHeaders().getFirst("X-Local-Api-Token"); return apiToken.isBlank() || (supplied != null && MessageDigest.isEqual(apiToken.getBytes(StandardCharsets.UTF_8), supplied.getBytes(StandardCharsets.UTF_8))); }
     private String body(HttpExchange exchange) throws IOException { String type = Optional.ofNullable(exchange.getRequestHeaders().getFirst("Content-Type")).orElse(""); if (!type.toLowerCase(java.util.Locale.ROOT).startsWith("application/json")) throw new IllegalArgumentException("Content-Type debe ser application/json"); byte[] bytes = exchange.getRequestBody().readNBytes(4_097); if (bytes.length > 4_096) throw new IllegalArgumentException("Cuerpo demasiado grande"); return new String(bytes, StandardCharsets.UTF_8); }
     private String required(String json, String field) { String value = HttpJson.field(json, field); if (value == null || value.isBlank()) throw new IllegalArgumentException("Falta " + field); return value; }
+    private ChatMessage.Type messageType(String json) {
+        String raw = HttpJson.field(json, "type");
+        if (raw == null || raw.isBlank()) return ChatMessage.Type.CHAT;
+        try { return ChatMessage.Type.valueOf(raw.trim().toUpperCase(java.util.Locale.ROOT)); }
+        catch (IllegalArgumentException exception) { throw new IllegalArgumentException("Tipo de mensaje no válido"); }
+    }
     private Map<String, Object> statusJson() { StatusUseCase.RuntimeStatus current = status.status(); Map<String, Object> map = new LinkedHashMap<>(); map.put("connection", connectionJson(current.connection())); map.put("speaking", current.speaking()); map.put("queueDepth", current.queueDepth()); map.put("acceptedMessages", current.acceptedMessages()); map.put("droppedMessages", current.droppedMessages()); map.put("rejectedMessages", current.rejectedMessages()); map.put("lastError", current.lastError()); map.put("lastErrorAt", current.lastErrorAt()); map.put("messages", current.messages().stream().map(message -> Map.of("id", message.id(), "author", message.author(), "text", message.text(), "receivedAt", message.receivedAt(), "state", message.state())).toList()); return map; }
-    private Map<String, Object> connectionJson(ConnectionUseCase.ConnectionSnapshot snapshot) { return Map.of("state", snapshot.state().name(), "username", snapshot.username(), "detail", snapshot.detail()); }
+    private Map<String, Object> connectionJson(ConnectionUseCase.ConnectionSnapshot snapshot) { return Map.of("state", snapshot.state().name(), "username", snapshot.username(), "detail", snapshot.detail(), "avatarUrl", snapshot.avatarUrl()); }
     private Map<String, Object> settingsJson(SpeechSettingsUseCase.Settings current) { return Map.of("voiceId", current.voiceId(), "speechRate", current.speechRate(), "audioOutputId", current.audioOutputId(), "audioOutputs", settings.audioOutputs().stream().map(output -> Map.of("id", output.id(), "displayName", output.displayName())).toList()); }
     private void send(HttpExchange exchange, int status, Map<String, ?> payload) throws IOException { byte[] response = HttpJson.object(payload).getBytes(StandardCharsets.UTF_8); exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8"); exchange.getResponseHeaders().set("Cache-Control", "no-store"); exchange.getResponseHeaders().set("X-Content-Type-Options", "nosniff"); exchange.getResponseHeaders().set("X-Frame-Options", "DENY"); exchange.sendResponseHeaders(status, response.length); exchange.getResponseBody().write(response); exchange.close(); }
     @Override public void close() { server.stop(1); }

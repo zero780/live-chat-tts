@@ -8,7 +8,7 @@ public enum TtsEngine {
     PIPER;
 
     public static TtsEngine fromEnvironment(String raw) {
-        if (raw == null || raw.isBlank()) return SAPI;
+        if (raw == null || raw.isBlank()) return PIPER;
         try {
             return valueOf(raw.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException exception) {

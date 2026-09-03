@@ -5,6 +5,7 @@ backend/out/
 backend/targetclasses/
 backend/.maven-cache/
 backend/piper-runtime/
+backend/piper-runtime-standalone/
 backend/piper/models/
 backend/piper/output/
 

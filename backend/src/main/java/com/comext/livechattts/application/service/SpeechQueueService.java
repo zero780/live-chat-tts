@@ -2,6 +2,7 @@ package com.comext.livechattts.application.service;
 
 import com.comext.livechattts.application.port.in.SpeechSettingsUseCase;
 import com.comext.livechattts.application.port.in.StatusUseCase;
+import com.comext.livechattts.application.port.out.AudioCuePlayer;
 import com.comext.livechattts.application.port.out.SpeechEngine;
 import com.comext.livechattts.domain.ChatMessage;
 import java.time.Duration;
@@ -19,11 +20,13 @@ public final class SpeechQueueService implements AutoCloseable {
     private static final int HISTORY_CAPACITY = 100;
     private final ArrayBlockingQueue<QueuedMessage> queue;
     private final SpeechEngine speechEngine;
+    private final AudioCuePlayer giftCuePlayer;
     private final SpeechSettingsUseCase settings;
     private final RuntimeDiagnostics diagnostics;
     private final SlidingWindowRateLimiter senderLimiter = new SlidingWindowRateLimiter(10, Duration.ofSeconds(10));
     private final SlidingWindowRateLimiter globalLimiter = new SlidingWindowRateLimiter(180, Duration.ofMinutes(1));
     private final AtomicBoolean speaking = new AtomicBoolean();
+    private final AtomicBoolean giftCueEnabled = new AtomicBoolean(true);
     private final AtomicLong accepted = new AtomicLong();
     private final AtomicLong dropped = new AtomicLong();
     private final AtomicLong rejected = new AtomicLong();
@@ -41,9 +44,10 @@ public final class SpeechQueueService implements AutoCloseable {
         return thread;
     });
 
-    public SpeechQueueService(int capacity, SpeechEngine speechEngine, SpeechSettingsUseCase settings, RuntimeDiagnostics diagnostics) {
+    public SpeechQueueService(int capacity, SpeechEngine speechEngine, AudioCuePlayer giftCuePlayer, SpeechSettingsUseCase settings, RuntimeDiagnostics diagnostics) {
         this.queue = new ArrayBlockingQueue<>(capacity);
         this.speechEngine = speechEngine;
+        this.giftCuePlayer = giftCuePlayer;
         this.settings = settings;
         this.diagnostics = diagnostics;
         worker.submit(this::consume);
@@ -84,8 +88,10 @@ public final class SpeechQueueService implements AutoCloseable {
                 speaking.set(true);
                 updateState(queued.id(), "SPEAKING");
                 try {
-                    String spokenText = message.type() == ChatMessage.Type.CHAT ? message.author() + " dice: " + message.text() : message.author() + " " + message.text();
+                    String spokenAuthor = TextSanitizer.sanitizeAuthorForSpeech(message.author());
+                    String spokenText = message.type() == ChatMessage.Type.CHAT ? spokenAuthor + " dice: " + message.text() : spokenAuthor + " " + message.text();
                     speechEngine.speak(spokenText, current.voiceId(), current.speechRate(), current.audioOutputId());
+                    playGiftCue(message);
                     updateState(queued.id(), "SPOKEN");
                 } catch (Exception exception) {
                     diagnostics.record("SAPI", exception);
@@ -110,6 +116,15 @@ public final class SpeechQueueService implements AutoCloseable {
         }
     }
 
+    private void playGiftCue(ChatMessage message) {
+        if (message.type() != ChatMessage.Type.GIFT || !giftCueEnabled.get()) return;
+        try {
+            giftCuePlayer.play();
+        } catch (Exception exception) {
+            if (giftCueEnabled.compareAndSet(true, false)) diagnostics.record("Gift alert", exception);
+        }
+    }
+
     private void addHistory(long id, ChatMessage message, String state) {
         synchronized (historyLock) {
             if (history.size() == HISTORY_CAPACITY) history.removeFirst();
@@ -129,6 +144,8 @@ public final class SpeechQueueService implements AutoCloseable {
     @Override public void close() {
         discardPending();
         worker.shutdownNow();
+        try { giftCuePlayer.close(); }
+        catch (Exception ignored) { }
         if (speechEngine instanceof AutoCloseable closeable) {
             try { closeable.close(); }
             catch (Exception ignored) { }

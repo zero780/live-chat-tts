@@ -32,7 +32,8 @@ public final class LiveConnectionService implements ConnectionUseCase {
         try {
             acceptingLiveMessages.set(true);
             client.connect(username, this::onMessage, this::onFailure);
-            snapshot.set(new ConnectionSnapshot(ConnectionState.CONNECTED, username, "Conectado"));
+            snapshot.set(new ConnectionSnapshot(ConnectionState.CONNECTED, username, "Conectado", client.profileImageUrl()));
+            diagnostics.clear();
         } catch (RuntimeException exception) {
             acceptingLiveMessages.set(false);
             snapshot.set(new ConnectionSnapshot(ConnectionState.ERROR, username, safeMessage(exception)));
@@ -52,7 +53,7 @@ public final class LiveConnectionService implements ConnectionUseCase {
         speechQueue.discardPending();
         diagnostics.record("TikTok", error);
         ConnectionSnapshot current = snapshot.get();
-        snapshot.set(new ConnectionSnapshot(ConnectionState.ERROR, current.username(), safeMessage(error)));
+        snapshot.set(new ConnectionSnapshot(ConnectionState.ERROR, current.username(), safeMessage(error), current.avatarUrl()));
     }
 
     @Override public synchronized void disconnect() {

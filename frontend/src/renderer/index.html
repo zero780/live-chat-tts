@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'none'; img-src 'self' data:; base-uri 'none'; form-action 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'none'; img-src 'self' https: data:; base-uri 'none'; form-action 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Live Chat TTS</title>
     <link rel="stylesheet" href="styles.css" />
@@ -21,6 +21,7 @@
           <p id="connection-state" class="connection-state" data-i18n="connection.preparing">Preparing local backend</p>
           <p id="connection-detail" class="connection-detail" data-i18n="connection.localReady">Speech will work without cloud services.</p>
         </div>
+        <img id="streamer-avatar" class="streamer-avatar" src="../assets/user_default.jpg" alt="" />
       </section>
       <section class="card connect-card">
         <label for="username" data-i18n="form.tiktokUsername">TikTok username</label>

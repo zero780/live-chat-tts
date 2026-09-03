@@ -1,6 +1,7 @@
 package com.comext.livechattts.bootstrap;
 
 import com.comext.livechattts.adapter.in.http.LocalHttpServer;
+import com.comext.livechattts.adapter.out.audio.CachedMp3CuePlayer;
 import com.comext.livechattts.adapter.out.file.FileSettingsStore;
 import com.comext.livechattts.adapter.out.live.LocalTestLiveChatClient;
 import com.comext.livechattts.adapter.out.live.TikTokLiveJavaClient;
@@ -8,6 +9,7 @@ import com.comext.livechattts.adapter.out.piper.PiperTtsSpeechEngine;
 import com.comext.livechattts.adapter.out.windows.WindowsDefaultAudioOutput;
 import com.comext.livechattts.adapter.out.windows.WindowsSapiSpeechEngine;
 import com.comext.livechattts.application.port.out.LiveChatClient;
+import com.comext.livechattts.application.port.out.AudioCuePlayer;
 import com.comext.livechattts.application.port.out.SpeechEngine;
 import com.comext.livechattts.application.service.LiveConnectionService;
 import com.comext.livechattts.application.service.RuntimeDiagnostics;
@@ -18,6 +20,7 @@ import com.comext.livechattts.domain.LiveSource;
 import java.util.concurrent.CountDownLatch;
 
 public final class Application {
+    private static final String GIFT_CUE_RESOURCE = "/audio/Fortnite_Gorillaz_Dare_Emote.mp3";
     private Application() { }
 
     public static void main(String[] args) throws Exception {
@@ -25,7 +28,7 @@ public final class Application {
         SpeechEngine speech = speechEngine(config);
         var settings = new SpeechSettingsService(speech, new WindowsDefaultAudioOutput(), new FileSettingsStore(config.appDataDirectory()));
         var diagnostics = new RuntimeDiagnostics();
-        var queue = new SpeechQueueService(config.queueCapacity(), speech, settings, diagnostics);
+        var queue = new SpeechQueueService(config.queueCapacity(), speech, giftCue(diagnostics), settings, diagnostics);
         var localLive = new LocalTestLiveChatClient();
         localLive.setTestConsumer(queue::submit);
         LiveChatClient liveClient = config.liveSource() == LiveSource.TIKTOK_LIVE_JAVA ? new TikTokLiveJavaClient() : localLive;
@@ -54,5 +57,14 @@ public final class Application {
                 yield piper;
             }
         };
+    }
+
+    private static AudioCuePlayer giftCue(RuntimeDiagnostics diagnostics) {
+        try {
+            return CachedMp3CuePlayer.fromResource(GIFT_CUE_RESOURCE);
+        } catch (Exception exception) {
+            diagnostics.record("Gift alert", exception);
+            return () -> { };
+        }
     }
 }
