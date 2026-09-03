@@ -13,5 +13,6 @@ public final class RuntimeDiagnostics {
     }
 
     public Snapshot snapshot() { return latest.get(); }
+    public void clear() { latest.set(new Snapshot("", "")); }
     public record Snapshot(String lastError, String lastErrorAt) { }
 }

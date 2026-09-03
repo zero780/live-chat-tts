@@ -5,10 +5,12 @@
 [![Español](https://img.shields.io/badge/README-Espa%C3%B1ol-2ea44f?style=for-the-badge)](README.es.md)
 [![Electron](https://img.shields.io/badge/Electron-44.1.1-47848f?style=flat&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Piper](https://img.shields.io/badge/Piper_TTS-es_MX--claude--high-7b4bb7?style=flat)](https://github.com/OHF-Voice/piper1-gpl)
+[![TikTokLiveJava](https://img.shields.io/badge/TikTokLiveJava-1.11.0-ff0050?style=flat)](https://github.com/jwdeveloper/TikTokLiveJava)
 [![Windows](https://img.shields.io/badge/Target-Windows-0078d4?style=flat&logo=windows)](#requirements)
 [![Builder](https://img.shields.io/badge/Packaging-Electron%20Builder-6f42c1?style=flat)](#production-build)
 
-Compact Electron desktop client for the local Java backend. It connects to a TikTok LIVE by username, displays connection and queue status, sends comments to the backend, and visualizes when SAPI is speaking.
+Compact Electron desktop client for the local Java backend. It connects to a TikTok LIVE by username, displays connection and queue status, sends comments to the backend, and visualizes when the selected local SAPI or Piper engine is speaking.
 
 ## Architecture
 
@@ -18,7 +20,7 @@ graph LR
   P --> M[Main process]
   M -->|127.0.0.1 + temporary token| J[Java 21 backend JAR]
   J --> T[TikTokLiveJava]
-  J --> S[Windows SAPI]
+  J --> S[Windows SAPI or local Piper]
 ```
 
 ### Security boundaries
@@ -33,10 +35,13 @@ graph LR
 
 - TikTok `uniqueId` input with connect/disconnect state.
 - Local test mode with a **Probar voz** action.
-- SAPI voice selection, speech rate and Windows default audio output settings.
+- SAPI voice selection, speech rate and Windows default audio output settings when SAPI is selected.
+- Local Piper support using the `es_MX-claude-high` model; Piper remains fully local.
 - Animated voice logo while the queue is speaking.
 - Bounded queue and backend resource limits visible as metrics.
-- Settings persisted locally by the backend; no chat history is stored.
+- Newest-first activity list retaining up to 100 chat and LIVE events, including queued and currently spoken items.
+- Gift and donation events are spoken first and then trigger the backend's local MP3 cue; follows, subscriptions and LIVE lifecycle events do not trigger it.
+- Settings persisted locally by the backend; the activity list is in-memory only.
 
 ## Requirements
 
@@ -68,6 +73,16 @@ run.bat
 
 The frontend defaults to `TIKTOK_LIVE_JAVA`; `test-ui.bat` overrides it to `LOCAL_TEST`.
 
+### Use Piper locally
+
+With the portable Piper files available under `backend/piper-native/`, launch the UI with the local `es_MX-claude-high` voice:
+
+```bat
+test-piper-ui.bat
+```
+
+This script explicitly sets `TTS_ENGINE=PIPER`. Piper is also the default when `TTS_ENGINE` is not set; set `TTS_ENGINE=SAPI` only to use the fallback.
+
 ## Production build
 
 Build the backend first from `backend\\` with `build.bat`. Then create the Java runtime and Windows installer:
@@ -83,6 +98,8 @@ Electron Builder uses `asar`, `extraResources` and an NSIS target. The installer
 - Electron application files.
 - `backend/live-chat-tts.jar` outside `app.asar`.
 - `jre/` with the reduced Java 21 runtime.
+
+The installer bundles Piper's native Windows executable, DLLs and the `es_MX-claude-high` voice model, so neither Python nor a separate Piper installation is required.
 
 The installer is written to `dist\\` by default.
 
@@ -109,4 +126,4 @@ frontend/
 
 ## License and third-party notices
 
-The frontend is local desktop software. Electron and Electron Builder retain their respective licenses. TikTokLiveJava is a separate MIT-licensed dependency included in the backend JAR.
+The frontend is local desktop software. Electron and Electron Builder retain their respective licenses. TikTokLiveJava is a separate MIT-licensed dependency included in the backend JAR. Piper and its voice model retain their upstream licenses.

@@ -14,9 +14,12 @@ public final class LocalTestLiveChatClient implements LiveChatClient {
     @Override public void disconnect() { consumer = null; }
     public void setTestConsumer(Consumer<ChatMessage> onMessage) { testConsumer = Objects.requireNonNull(onMessage); }
     public boolean publish(String author, String text) {
+        return publish(author, text, ChatMessage.Type.CHAT);
+    }
+    public boolean publish(String author, String text, ChatMessage.Type type) {
         Consumer<ChatMessage> current = testConsumer != null ? testConsumer : consumer;
         if (current == null) return false;
-        current.accept(new ChatMessage(author, text, Instant.now()));
+        current.accept(new ChatMessage(author, text, Instant.now(), type));
         return true;
     }
 }

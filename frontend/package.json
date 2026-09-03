@@ -1,6 +1,6 @@
 {
   "name": "live-chat-tts-desktop",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "productName": "Live Chat TTS",
   "author": "Fabrizio GC",
   "license": "MIT",
@@ -35,6 +35,18 @@
       {
         "from": "runtime-java21-final",
         "to": "jre",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../backend/piper-native/piper",
+        "to": "piper-native",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../backend/piper/models",
+        "to": "piper/models",
         "filter": [
           "**/*"
         ]

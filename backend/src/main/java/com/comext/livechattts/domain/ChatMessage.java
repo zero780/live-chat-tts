@@ -4,7 +4,16 @@ import java.time.Instant;
 import java.util.Objects;
 
 public record ChatMessage(String author, String text, Instant receivedAt, Type type) {
-    public enum Type { CHAT, EVENT }
+    public enum Type {
+        CHAT,
+        GIFT,
+        FOLLOW,
+        SUBSCRIBE,
+        LIVE_STARTED,
+        LIVE_RESUMED,
+        LIVE_PAUSED,
+        LIVE_ENDED
+    }
 
     public ChatMessage(String author, String text, Instant receivedAt) {
         this(author, text, receivedAt, Type.CHAT);
