@@ -20,13 +20,13 @@ public final class TikTokLiveJavaClient implements LiveChatClient {
         disconnect();
         try {
             LiveClient connected = TikTokLive.newClient(username)
-                .onComment((liveClient, event) -> publish(onMessage, displayName(event.getUser()), event.getText()))
+                .onComment((liveClient, event) -> publish(onMessage, displayName(event.getUser()), event.getText(), ChatMessage.Type.CHAT))
                 .onGift((liveClient, event) -> {
                     int quantity = Math.max(1, event.getCombo());
-                    publish(onMessage, displayName(event.getUser()), "ha enviado el regalo " + event.getGift().getName() + " por " + quantity);
+                    publish(onMessage, displayName(event.getUser()), "ha enviado el regalo " + event.getGift().getName() + " por " + quantity, ChatMessage.Type.EVENT);
                 })
-                .onFollow((liveClient, event) -> publish(onMessage, displayName(event.getUser()), "ahora sigue el LIVE"))
-                .onSubscribe((liveClient, event) -> publish(onMessage, displayName(event.getUser()), "se ha suscrito al LIVE"))
+                .onFollow((liveClient, event) -> publish(onMessage, displayName(event.getUser()), "ahora sigue el canal", ChatMessage.Type.EVENT))
+                .onSubscribe((liveClient, event) -> publish(onMessage, displayName(event.getUser()), "se ha suscrito al canal", ChatMessage.Type.EVENT))
                 .onConnected((liveClient, event) -> announce(onMessage, "El LIVE ha iniciado"))
                 .onLiveUnpaused((liveClient, event) -> announce(onMessage, "El LIVE se ha reanudado"))
                 .onLivePaused((liveClient, event) -> announce(onMessage, "El LIVE se ha pausado"))
@@ -48,11 +48,11 @@ public final class TikTokLiveJavaClient implements LiveChatClient {
     }
 
     private void announce(Consumer<ChatMessage> onMessage, String text) {
-        publish(onMessage, "TikTok", text);
+        publish(onMessage, "TikTok", text, ChatMessage.Type.EVENT);
     }
 
-    private void publish(Consumer<ChatMessage> onMessage, String author, String text) {
-        onMessage.accept(new ChatMessage(author, text, Instant.now()));
+    private void publish(Consumer<ChatMessage> onMessage, String author, String text, ChatMessage.Type type) {
+        onMessage.accept(new ChatMessage(author, text, Instant.now(), type));
     }
 
     private String displayName(User user) {

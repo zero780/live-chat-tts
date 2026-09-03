@@ -39,7 +39,7 @@ public final class LiveConnectionService implements ConnectionUseCase {
     private void onMessage(ChatMessage raw) {
         String author = TextSanitizer.sanitize(raw.author());
         String text = TextSanitizer.sanitize(raw.text());
-        if (!author.isBlank() && !text.isBlank()) speechQueue.submit(new ChatMessage(author, text, Instant.now()));
+        if (!author.isBlank() && !text.isBlank()) speechQueue.submit(new ChatMessage(author, text, Instant.now(), raw.type()));
     }
 
     private void onFailure(Throwable error) {

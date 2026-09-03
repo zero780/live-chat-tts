@@ -67,7 +67,8 @@ public final class SpeechQueueService implements AutoCloseable {
                 speaking.set(true);
                 updateState(queued.id(), "SPEAKING");
                 try {
-                    speechEngine.speak(message.author() + " dice: " + message.text(), current.voiceId(), current.speechRate(), current.audioOutputId());
+                    String spokenText = message.type() == ChatMessage.Type.CHAT ? message.author() + " dice: " + message.text() : message.author() + " " + message.text();
+                    speechEngine.speak(spokenText, current.voiceId(), current.speechRate(), current.audioOutputId());
                     updateState(queued.id(), "SPOKEN");
                 } catch (Exception exception) {
                     diagnostics.record("SAPI", exception);
