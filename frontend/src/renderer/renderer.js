@@ -46,6 +46,7 @@ let messagesSignature = '';
 let lastMessages = [];
 let isBusy = false;
 let runtimeSource = '';
+let statusRefreshInFlight = false;
 
 function t(key, values = {}) {
   return (translations[language][key] || translations.en[key] || key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? '');
@@ -137,6 +138,8 @@ async function loadSettings() {
 }
 
 async function refreshStatus() {
+  if (statusRefreshInFlight) return;
+  statusRefreshInFlight = true;
   try {
     const status = await window.desktop.status();
     const connection = status.connection;
@@ -151,6 +154,7 @@ async function refreshStatus() {
     elements.disconnect.hidden = !connected;
     elements.connect.hidden = connected;
   } catch (error) { showError(error); }
+  finally { statusRefreshInFlight = false; }
 }
 
 function changeLanguage() {
@@ -212,7 +216,7 @@ translateDocument();
     elements.testCard.hidden = false;
     await loadSettings();
     await refreshStatus();
-    setInterval(refreshStatus, 900);
+    setInterval(refreshStatus, 300);
   } catch (error) {
     elements.state.textContent = t('error.startFailed');
     showError(error);

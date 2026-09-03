@@ -21,7 +21,7 @@ public final class SpeechQueueService implements AutoCloseable {
     private final SpeechEngine speechEngine;
     private final SpeechSettingsUseCase settings;
     private final RuntimeDiagnostics diagnostics;
-    private final SlidingWindowRateLimiter senderLimiter = new SlidingWindowRateLimiter(4, Duration.ofSeconds(10));
+    private final SlidingWindowRateLimiter senderLimiter = new SlidingWindowRateLimiter(10, Duration.ofSeconds(10));
     private final SlidingWindowRateLimiter globalLimiter = new SlidingWindowRateLimiter(180, Duration.ofMinutes(1));
     private final AtomicBoolean speaking = new AtomicBoolean();
     private final AtomicLong accepted = new AtomicLong();
@@ -30,7 +30,16 @@ public final class SpeechQueueService implements AutoCloseable {
     private final AtomicLong messageIds = new AtomicLong();
     private final Object historyLock = new Object();
     private final Deque<HistoryEntry> history = new ArrayDeque<>(HISTORY_CAPACITY);
-    private final ExecutorService worker = Executors.newSingleThreadExecutor(Thread.ofVirtual().name("speech-worker-", 0).factory());
+    /**
+     * A dedicated platform thread keeps a predictable OS scheduling priority.
+     * Virtual threads do not provide a useful per-task priority on Windows.
+     */
+    private final ExecutorService worker = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "speech-worker");
+        thread.setDaemon(true);
+        thread.setPriority(Thread.NORM_PRIORITY - 1);
+        return thread;
+    });
 
     public SpeechQueueService(int capacity, SpeechEngine speechEngine, SpeechSettingsUseCase settings, RuntimeDiagnostics diagnostics) {
         this.queue = new ArrayBlockingQueue<>(capacity);
@@ -109,7 +118,13 @@ public final class SpeechQueueService implements AutoCloseable {
         }
     }
 
-    @Override public void close() { worker.shutdownNow(); }
+    @Override public void close() {
+        worker.shutdownNow();
+        if (speechEngine instanceof AutoCloseable closeable) {
+            try { closeable.close(); }
+            catch (Exception ignored) { }
+        }
+    }
 
     private record QueuedMessage(long id, ChatMessage message) { }
     private record HistoryEntry(long id, ChatMessage message, String state) { }
