@@ -18,6 +18,10 @@ Live Chat TTS is a privacy-oriented desktop application for creators and moderat
 
 > TikTokLiveJava is an unofficial reverse-engineering project. Review its license, TikTok's terms and applicable rules before using the integration on a real LIVE. The application is a listener: it does not send chat messages, automate accounts, rotate IPs or use cookies.
 
+## Application preview
+
+![Live Chat TTS application](docs/application-example.png)
+
 ## What is included
 
 - TikTok LIVE connection by `uniqueId`.

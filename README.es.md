@@ -1,5 +1,9 @@
 # Live Chat TTS
 
+## Vista previa de la aplicaciÃ³n
+
+![AplicaciÃ³n Live Chat TTS](docs/application-example.png)
+
 <p align="center">
   <img src="frontend/src/assets/livechattts-logo.png" width="180" alt="Logo de Live Chat TTS" />
 </p>
