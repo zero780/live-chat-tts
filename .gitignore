@@ -5,6 +5,7 @@ backend/out/
 backend/targetclasses/
 backend/.maven-cache/
 backend/.m2repo/
+backend/.m2verify/
 backend/apache-maven-*/
 backend/piper-runtime/
 backend/piper-runtime-standalone/

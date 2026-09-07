@@ -25,6 +25,10 @@ public record AppConfig(Platform platform, LiveSource liveSource, TtsEngine ttsE
     }
 
     public record PiperRuntime(Path executable, Path modelPath) {
+        public Path modelPath(String voiceId) {
+            if ("piper:en_US-hfc_female-medium".equals(voiceId)) return modelPath.resolveSibling("en_US-hfc_female-medium.onnx");
+            return modelPath;
+        }
         public static PiperRuntime fromEnvironment() {
             Path executable = path("PIPER_EXECUTABLE", Path.of("backend", "piper-native", "piper", "piper.exe"));
             Path model = path("PIPER_MODEL", Path.of("backend", "piper", "models", "es_MX-claude-high.onnx"));

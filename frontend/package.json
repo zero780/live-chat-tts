@@ -1,10 +1,10 @@
 {
   "name": "live-chat-tts-desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "productName": "Live Chat TTS",
   "author": "Fabrizio GC",
   "license": "MIT",
-  "description": "Interfaz local y segura para Live Chat TTS",
+  "description": "Interfaz local y segura para Live Chat TTS de Tiktok",
   "main": "src/main.cjs",
   "scripts": {
     "start": "electron .",

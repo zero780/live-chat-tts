@@ -5,12 +5,12 @@
 [![Español](https://img.shields.io/badge/README-Espa%C3%B1ol-2ea44f?style=for-the-badge)](README.es.md)
 [![Electron](https://img.shields.io/badge/Electron-44.1.1-47848f?style=flat&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Piper](https://img.shields.io/badge/Piper_TTS-es_MX--claude--high-7b4bb7?style=flat)](https://github.com/OHF-Voice/piper1-gpl)
+[![Piper](https://img.shields.io/badge/Piper_TTS-es_MX--claude--high%20%2B%20en_US--hfc_female--medium-7b4bb7?style=flat)](https://github.com/OHF-Voice/piper1-gpl)
 [![TikTokLiveJava](https://img.shields.io/badge/TikTokLiveJava-1.11.0-ff0050?style=flat)](https://github.com/jwdeveloper/TikTokLiveJava)
 [![Windows](https://img.shields.io/badge/Target-Windows-0078d4?style=flat&logo=windows)](#requirements)
 [![Builder](https://img.shields.io/badge/Packaging-Electron%20Builder-6f42c1?style=flat)](#production-build)
 
-Compact Electron desktop client for the local Java backend. It connects to a TikTok LIVE by username, displays connection and queue status, sends comments to the backend, and visualizes when the selected local SAPI or Piper engine is speaking.
+Compact Electron desktop client for the local Java backend. It connects to a TikTok LIVE by username, displays connection and queue status, sends comments to the backend, and visualizes when the selected Piper voice is speaking.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ graph LR
   P --> M[Main process]
   M -->|127.0.0.1 + temporary token| J[Java 21 backend JAR]
   J --> T[TikTokLiveJava]
-  J --> S[Windows SAPI or local Piper]
+  J --> S[Local Piper]
 ```
 
 ### Security boundaries
@@ -34,14 +34,18 @@ graph LR
 ## Features
 
 - TikTok `uniqueId` input with connect/disconnect state.
+- Spanish/English interface toggle with flag button; chat content remains unchanged.
+- Desktop notifications when a connection succeeds or ends.
+- Streamer avatar display with a local default image fallback.
 - Local test mode with a **Probar voz** action.
-- SAPI voice selection, speech rate and Windows default audio output settings when SAPI is selected.
-- Local Piper support using the `es_MX-claude-high` model; Piper remains fully local.
+- Piper voice selection (`Español MX` by default or `English US`) and speech rate control.
+- Local Piper support using `es_MX-claude-high` (Mexican Spanish) and `en_US-hfc_female-medium` (English US); Piper remains fully local.
 - Animated voice logo while the queue is speaking.
 - Bounded queue and backend resource limits visible as metrics.
 - Newest-first activity list retaining up to 100 chat and LIVE events, including queued and currently spoken items.
-- Gift and donation events are spoken first and then trigger the backend's local MP3 cue; follows, subscriptions and LIVE lifecycle events do not trigger it.
+- Gift and donation events with a quantity of 10 or more are spoken first and then trigger the backend's local MP3 cue; smaller gifts, follows, subscriptions and LIVE lifecycle events do not trigger it.
 - Settings persisted locally by the backend; the activity list is in-memory only.
+- Pressing Enter in the username field attempts a connection only when no active connection exists.
 
 ## Requirements
 
@@ -59,7 +63,7 @@ cd path\to\live-chat-tts\frontend
 npm install
 ```
 
-Run an offline UI/SAPI smoke test:
+Run an offline UI/Piper smoke test:
 
 ```bat
 test-ui.bat
@@ -75,13 +79,13 @@ The frontend defaults to `TIKTOK_LIVE_JAVA`; `test-ui.bat` overrides it to `LOCA
 
 ### Use Piper locally
 
-With the portable Piper files available under `backend/piper-native/`, launch the UI with the local `es_MX-claude-high` voice:
+With the portable Piper files and models available under `backend/piper-native/` and `backend/piper/models/`, launch the UI and choose either `es_MX-claude-high` or `en_US-hfc_female-medium`:
 
 ```bat
 test-piper-ui.bat
 ```
 
-This script explicitly sets `TTS_ENGINE=PIPER`. Piper is also the default when `TTS_ENGINE` is not set; set `TTS_ENGINE=SAPI` only to use the fallback.
+This script runs the same local Piper engine used by the production application.
 
 ## Production build
 
@@ -99,7 +103,7 @@ Electron Builder uses `asar`, `extraResources` and an NSIS target. The installer
 - `backend/live-chat-tts.jar` outside `app.asar`.
 - `jre/` with the reduced Java 21 runtime.
 
-The installer bundles Piper's native Windows executable, DLLs and the `es_MX-claude-high` voice model, so neither Python nor a separate Piper installation is required.
+The installer bundles Piper's native Windows executable, DLLs and both voice models (`es_MX-claude-high` and `en_US-hfc_female-medium`), so no separate Piper installation is required.
 
 The installer is written to `dist\\` by default.
 
@@ -120,10 +124,10 @@ frontend/
 ## Troubleshooting
 
 - `No se encontró el JAR`: build `backend\\dist\\live-chat-tts.jar` first.
-- No voices listed: verify Windows SAPI voices and run the frontend on Windows.
+- No voices listed: verify that both Piper model files are present under `backend/piper/models/` and rebuild the backend JAR.
 - Connection errors: confirm the account is LIVE and review the backend status; TikTokLiveJava is an unofficial integration whose behavior can change.
 - If a previous app instance locks a build output, close it and run `npm run dist-win` again.
 
 ## License and third-party notices
 
-The frontend is local desktop software. Electron and Electron Builder retain their respective licenses. TikTokLiveJava is a separate MIT-licensed dependency included in the backend JAR. Piper and its voice model retain their upstream licenses.
+The frontend is local desktop software. Electron and Electron Builder retain their respective licenses. TikTokLiveJava is a separate MIT-licensed dependency included in the backend JAR. Piper and its voice models retain their upstream licenses.

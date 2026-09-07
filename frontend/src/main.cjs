@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, Notification, ipcMain, screen } = require('electron');
 const { spawn } = require('node:child_process');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
@@ -117,6 +117,11 @@ function setupIpc() {
   ipcMain.handle('backend:connect', (_, username) => api('/api/connect', { method: 'POST', body: { username } }));
   ipcMain.handle('backend:disconnect', () => api('/api/disconnect', { method: 'POST', body: {} }));
   ipcMain.handle('backend:test-message', (_, message) => api('/api/test/messages', { method: 'POST', body: message }));
+  ipcMain.handle('desktop:notify', (_, payload) => {
+    if (!Notification.isSupported()) return false;
+    new Notification({ title: String(payload?.title || 'Live Chat TTS').slice(0, 80), body: String(payload?.body || '').slice(0, 240) }).show();
+    return true;
+  });
 }
 
 function createWindow() {

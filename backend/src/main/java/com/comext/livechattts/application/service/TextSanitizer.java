@@ -1,6 +1,8 @@
 package com.comext.livechattts.application.service;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class TextSanitizer {
     private TextSanitizer() { }
@@ -22,5 +24,23 @@ public final class TextSanitizer {
                 .trim();
         if (clean.length() > 80) clean = clean.substring(0, 80).trim();
         return clean.isBlank() ? "Usuario" : clean;
+    }
+
+    /** Splits long speech into small natural fragments to reduce time to first audio. */
+    public static List<String> speechFragments(String input) {
+        String text = sanitize(input);
+        if (text.length() <= 120) return List.of(text);
+        List<String> fragments = new ArrayList<>();
+        for (String sentence : text.split("(?<=[.!?;:])\\s+")) {
+            String remaining = sentence.trim();
+            while (remaining.length() > 120) {
+                int split = remaining.lastIndexOf(' ', 120);
+                if (split < 40) split = 120;
+                fragments.add(remaining.substring(0, split).trim());
+                remaining = remaining.substring(split).trim();
+            }
+            if (!remaining.isBlank()) fragments.add(remaining);
+        }
+        return fragments.isEmpty() ? List.of(text) : fragments;
     }
 }

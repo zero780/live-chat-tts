@@ -4,37 +4,37 @@
   <img src="frontend/src/assets/livechattts-logo.png" width="180" alt="Live Chat TTS logo" />
 </p>
 
-<p align="center">A local Windows desktop tool that turns TikTok LIVE activity into speech using the voices installed on Windows.</p>
+<p align="center">A local Windows desktop tool that turns TikTok LIVE activity into speech with Piper TTS.</p>
 
 [![Español](https://img.shields.io/badge/README-Espa%C3%B1ol-2ea44f?style=for-the-badge)](README.es.md)
 [![Java](https://img.shields.io/badge/Backend-Java%2021-007396?style=flat&logo=openjdk&logoColor=white)](backend/README.md)
 [![Electron](https://img.shields.io/badge/Frontend-Electron%2044.1.1-47848f?style=flat&logo=electron&logoColor=white)](frontend/README.md)
-[![Piper](https://img.shields.io/badge/Piper_TTS-es_MX--claude--high-7b4bb7?style=flat)](https://github.com/OHF-Voice/piper1-gpl)
+[![Piper](https://img.shields.io/badge/Piper_TTS-es_MX--claude--high%20%2B%20en_US--hfc_female--medium-7b4bb7?style=flat)](https://github.com/OHF-Voice/piper1-gpl)
 [![TikTokLiveJava](https://img.shields.io/badge/TikTokLiveJava-1.11.0-ff0050?style=flat)](https://github.com/jwdeveloper/TikTokLiveJava)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078d4?style=flat&logo=windows)](#requirements)
 [![Architecture](https://img.shields.io/badge/Architecture-Hexagonal-6f42c1?style=flat)](#architecture)
 
-Live Chat TTS is a privacy-oriented desktop application for creators and moderators. It connects to a TikTok LIVE through the unofficial TikTokLiveJava client, receives chat and supported LIVE events locally, places speech requests in a bounded FIFO queue, and reads them with local Piper TTS or Windows SAPI. No cloud TTS provider or external application server is required.
+Live Chat TTS is a privacy-oriented desktop application for creators and moderators. It connects to a TikTok LIVE through the unofficial TikTokLiveJava client, receives chat and supported LIVE events locally, places speech requests in a bounded FIFO queue, and reads them with local Piper TTS. No cloud TTS provider or external application server is required.
 
 > TikTokLiveJava is an unofficial reverse-engineering project. Review its license, TikTok's terms and applicable rules before using the integration on a real LIVE. The application is a listener: it does not send chat messages, automate accounts, rotate IPs or use cookies.
 
 ## Application preview
 
-![Live Chat TTS application](docs/application-example.png)
+![Live Chat TTS application](docs/application-example.jpg)
 
 ## What is included
 
 - TikTok LIVE connection by `uniqueId`.
 - Chat comments plus supported activity events such as gifts, follows, subscriptions and LIVE lifecycle notifications.
-- Local Piper TTS support with the Mexican Spanish `es_MX-claude-high` voice, plus Windows SAPI as an alternative engine.
-- Voice speed and Windows audio-output selection.
-- A compact Electron interface with connection state, queue counters, animated speech indicator and a 100-message activity view.
-- A local test mode that exercises the queue and SAPI without connecting to TikTok.
+- Local Piper TTS support with Mexican Spanish `es_MX-claude-high` and English US `en_US-hfc_female-medium` voices. Spanish is selected by default.
+- Voice speed control and local audio playback.
+- A compact Electron interface with Spanish/English switching, connection state, desktop notifications, streamer avatar, queue counters, animated speech indicator and a newest-first 100-message activity view.
+- A local test mode that exercises the queue and Piper without connecting to TikTok.
 - A self-contained backend JAR and a Windows NSIS installer that bundles a reduced Java 21 runtime.
 
 ## Architecture
 
-The project is split into independent `backend/` and `frontend/` applications. The backend follows hexagonal architecture: domain and use cases depend on ports, while HTTP, TikTokLiveJava, Windows SAPI and file storage are adapters.
+The project is split into independent `backend/` and `frontend/` applications. The backend follows hexagonal architecture: domain and use cases depend on ports, while HTTP, TikTokLiveJava, Piper and file storage are adapters.
 
 ```mermaid
 graph LR
@@ -47,7 +47,6 @@ graph LR
   LIVE --> TIKTOK[TikTokLiveJava adapter]
   QUEUE --> SPEECH[SpeechEngine port]
   SPEECH --> PIPER[Local Piper adapter]
-  SPEECH --> WINDOWS[Windows SAPI adapter]
   APP --> SETTINGS[SettingsStore port]
   SETTINGS --> FILE[Local settings file]
 ```
@@ -57,7 +56,7 @@ graph LR
 1. Electron starts the bundled Java process on an available loopback port and creates a temporary API token.
 2. The renderer communicates only with the allowlisted preload IPC methods.
 3. The backend validates and sanitizes content, applies rate limits and places accepted messages in the bounded queue.
-4. One sequential speech worker invokes the selected local engine: Piper or Windows SAPI.
+4. One sequential speech worker invokes the selected Piper voice.
 5. The frontend polls local status and displays connection, queue, message history and speaking state.
 
 ## Repository layout
@@ -78,7 +77,7 @@ Detailed documentation: [backend/README.md](backend/README.md) and [frontend/REA
 - Windows 10/11 x64.
 - Java Development Kit 21 and Apache Maven 3.9+ to build the backend.
 - Node.js 20+ and npm to develop or package the frontend.
-- Internet access only for the TikTok LIVE connection. Speech synthesis is local through Piper or Windows SAPI.
+- Internet access only for the TikTok LIVE connection. Speech synthesis is fully local through Piper.
 
 The packaged installer includes a reduced Java 21 runtime, so Java is not required on the target computer.
 
@@ -117,7 +116,7 @@ Outputs:
 - `backend/dist/live-chat-tts.jar`: shaded backend JAR with TikTokLiveJava, JLayer and the bundled gift-alert MP3.
 - `frontend/dist/Live-Chat-TTS-Setup-<version>.exe`: Windows NSIS installer containing Electron, the JAR and the reduced Java runtime.
 
-The installer bundles Piper's native Windows executable, required DLLs and the `es_MX-claude-high` voice model. No Python installation is required. Piper is the default speech engine; set `TTS_ENGINE=SAPI` only when the Windows SAPI fallback is required.
+The installer bundles Piper's native Windows executable, required DLLs and both local voice models (`es_MX-claude-high` and `en_US-hfc_female-medium`). Piper is the only documented speech engine and the Spanish voice is selected by default.
 
 ## Security, privacy and resource controls
 
@@ -126,7 +125,7 @@ The installer bundles Piper's native Windows executable, required DLLs and the `
 - A temporary per-run token protects the local API when launched by Electron.
 - No credentials, cookies or tokens are hard-coded.
 - The queue is bounded, speech is sequential, and global/per-author sliding-window limits protect CPU, memory and audio resources.
-- Gifts are spoken, then replay a locally cached MP3 cue; follows, subscriptions and LIVE status events do not play the cue.
+- Gifts with a quantity of 10 or more are spoken, then replay a locally cached MP3 cue; smaller gifts, follows, subscriptions and LIVE status events do not play the cue. Event wording follows the selected voice language (`dice`/`says`).
 - Piper keeps its selected ONNX model loaded in one local worker process; it does not call a cloud TTS service.
 - Text is sanitized and length-limited; chat history is kept in memory only and capped at 100 entries.
 - Settings are stored locally under `%LOCALAPPDATA%\\LiveChatTTS` by default.
@@ -139,4 +138,4 @@ The integration depends on TikTokLiveJava and may require updates if TikTok chan
 
 ## License and third-party notices
 
-This project is released under the [MIT License](LICENSE). A Spanish convenience translation is available in [LICENSE.es.md](LICENSE.es.md). Electron, Java, Windows SAPI, Piper, its voice model and TikTokLiveJava remain subject to their respective licenses. Retain third-party notices before redistribution.
+This project is released under the [MIT License](LICENSE). A Spanish convenience translation is available in [LICENSE.es.md](LICENSE.es.md). Electron, Java, Piper, its voice models and TikTokLiveJava remain subject to their respective licenses. Retain third-party notices before redistribution.

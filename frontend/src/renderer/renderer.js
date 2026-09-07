@@ -47,6 +47,8 @@ let lastMessages = [];
 let isBusy = false;
 let runtimeSource = '';
 let statusRefreshInFlight = false;
+let previousConnectionState = null;
+let manualDisconnectPending = false;
 const defaultAvatar = '../assets/user_default.jpg';
 
 function t(key, values = {}) {
@@ -152,6 +154,17 @@ async function refreshStatus() {
   try {
     const status = await window.desktop.status();
     const connection = status.connection;
+    const currentState = connection.state;
+    if (previousConnectionState && previousConnectionState !== currentState) {
+      if (currentState === 'CONNECTED') {
+        window.desktop.notify({ title: 'Live Chat TTS', body: language === 'es' ? `Conexión exitosa a @${connection.username}` : `Successfully connected to @${connection.username}` });
+      } else if (currentState === 'ERROR' || (currentState === 'DISCONNECTED' && previousConnectionState !== 'ERROR')) {
+        const manual = manualDisconnectPending;
+        manualDisconnectPending = false;
+        window.desktop.notify({ title: 'Live Chat TTS', body: manual ? (language === 'es' ? 'Desconectado manualmente' : 'Manually disconnected') : (language === 'es' ? 'La conexión se ha perdido' : 'Connection lost') });
+      }
+    }
+    previousConnectionState = currentState;
     setStreamerAvatar(connection.avatarUrl);
     elements.state.textContent = connection.state === 'CONNECTED' ? t('connection.connectedTo', { username: connection.username }) : connection.state === 'CONNECTING' ? t('connection.connecting') : connection.state === 'ERROR' ? t('connection.error') : t('connection.disconnected');
     elements.detail.textContent = status.lastError || connection.detail || t('connection.ready');
@@ -219,6 +232,7 @@ elements.username.addEventListener('keydown', (event) => {
 });
 elements.disconnect.addEventListener('click', async () => {
   try {
+    manualDisconnectPending = true;
     showError();
     await window.desktop.disconnect();
     await refreshStatus();
@@ -240,7 +254,7 @@ translateDocument();
     elements.testCard.hidden = false;
     await loadSettings();
     await refreshStatus();
-    setInterval(refreshStatus, 300);
+    setInterval(refreshStatus, 750);
   } catch (error) {
     elements.state.textContent = t('error.startFailed');
     showError(error);
