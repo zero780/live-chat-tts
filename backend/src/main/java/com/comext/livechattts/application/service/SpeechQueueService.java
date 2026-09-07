@@ -6,6 +6,7 @@ import com.comext.livechattts.application.port.out.AudioCuePlayer;
 import com.comext.livechattts.application.port.out.SpeechEngine;
 import com.comext.livechattts.domain.ChatMessage;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -18,6 +19,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class SpeechQueueService implements AutoCloseable {
     private static final int HISTORY_CAPACITY = 100;
+    private static final Duration MAX_QUEUE_AGE = Duration.ofSeconds(20);
+    private static final int GIFT_CUE_MINIMUM_QUANTITY = 10;
     private final ArrayBlockingQueue<QueuedMessage> queue;
     private final SpeechEngine speechEngine;
     private final AudioCuePlayer giftCuePlayer;
@@ -83,14 +86,24 @@ public final class SpeechQueueService implements AutoCloseable {
             while (!Thread.currentThread().isInterrupted()) {
                 QueuedMessage queued = queue.take();
                 ChatMessage message = queued.message();
+                if (message.receivedAt().isBefore(Instant.now().minus(MAX_QUEUE_AGE))) {
+                    dropped.incrementAndGet();
+                    updateState(queued.id(), "DROPPED");
+                    continue;
+                }
                 SpeechSettingsUseCase.Settings current = settings.settings();
                 if (current.voiceId().isBlank()) { updateState(queued.id(), "FAILED"); continue; }
                 speaking.set(true);
                 updateState(queued.id(), "SPEAKING");
                 try {
                     String spokenAuthor = TextSanitizer.sanitizeAuthorForSpeech(message.author());
-                    String spokenText = message.type() == ChatMessage.Type.CHAT ? spokenAuthor + " dice: " + message.text() : spokenAuthor + " " + message.text();
-                    speechEngine.speak(spokenText, current.voiceId(), current.speechRate(), current.audioOutputId());
+                    boolean english = isEnglishVoice(current.voiceId());
+                    String spokenText = message.type() == ChatMessage.Type.CHAT
+                            ? spokenAuthor + (english ? " says: " : " dice: ") + message.text()
+                            : spokenAuthor + " " + eventText(message, english);
+                    for (String fragment : TextSanitizer.speechFragments(spokenText)) {
+                        speechEngine.speak(fragment, current.voiceId(), current.speechRate(), current.audioOutputId());
+                    }
                     playGiftCue(message);
                     updateState(queued.id(), "SPOKEN");
                 } catch (Exception exception) {
@@ -105,6 +118,33 @@ public final class SpeechQueueService implements AutoCloseable {
         }
     }
 
+    private static boolean isEnglishVoice(String voiceId) {
+        String normalized = voiceId == null ? "" : voiceId.toLowerCase(java.util.Locale.ROOT);
+        return normalized.startsWith("piper:en_us-")
+                || normalized.contains("en-us")
+                || normalized.contains("en_us")
+                || normalized.contains("microsoft david")
+                || normalized.contains("microsoft zira")
+                || normalized.contains("microsoft mark");
+    }
+
+    private static String eventText(ChatMessage message, boolean english) {
+        if (!english) return message.text();
+        return switch (message.type()) {
+            case GIFT -> {
+                String giftName = message.text().replaceFirst("^ha enviado un regalo\\s*", "").replaceFirst("\\s+por\\s+\\d+\\s*$", "").trim();
+                yield "sent a gift " + giftName + (message.giftQuantity() > 1 ? " x" + message.giftQuantity() : "");
+            }
+            case FOLLOW -> "is now following the channel";
+            case SUBSCRIBE -> "subscribed to the channel";
+            case LIVE_STARTED -> "started the LIVE";
+            case LIVE_RESUMED -> "resumed the LIVE";
+            case LIVE_PAUSED -> "paused the LIVE";
+            case LIVE_ENDED -> "ended the LIVE";
+            case CHAT -> message.text();
+        };
+    }
+
     public boolean isSpeaking() { return speaking.get(); }
     public int depth() { return queue.size(); }
     public long accepted() { return accepted.get(); }
@@ -117,7 +157,7 @@ public final class SpeechQueueService implements AutoCloseable {
     }
 
     private void playGiftCue(ChatMessage message) {
-        if (message.type() != ChatMessage.Type.GIFT || !giftCueEnabled.get()) return;
+        if (message.type() != ChatMessage.Type.GIFT || message.giftQuantity() < GIFT_CUE_MINIMUM_QUANTITY || !giftCueEnabled.get()) return;
         try {
             giftCuePlayer.play();
         } catch (Exception exception) {

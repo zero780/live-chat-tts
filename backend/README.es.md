@@ -5,17 +5,17 @@
 [![English](https://img.shields.io/badge/README-English-1f6feb?style=for-the-badge)](README.md)
 [![Java 21](https://img.shields.io/badge/Java-21-007396?style=flat&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![TikTokLiveJava](https://img.shields.io/badge/TikTokLiveJava-1.11.0-ff0050?style=flat)](https://github.com/jwdeveloper/TikTokLiveJava)
-[![Piper](https://img.shields.io/badge/Piper_TTS-es_MX--claude--high-7b4bb7?style=flat)](https://github.com/OHF-Voice/piper1-gpl)
+[![Piper](https://img.shields.io/badge/Piper_TTS-es_MX--claude--high%20%2B%20en_US--hfc_female--medium-7b4bb7?style=flat)](https://github.com/OHF-Voice/piper1-gpl)
 [![Arquitectura](https://img.shields.io/badge/Arquitectura-Hexagonal-6f42c1?style=flat)](#arquitectura)
 [![Plataforma](https://img.shields.io/badge/Plataforma-Windows-0078d4?style=flat&logo=windows)](#requisitos)
 
-Servicio local Java 21 que recibe comentarios de TikTok LIVE mediante TikTokLiveJava y los reproduce con Piper local o Windows SAPI. El servicio está diseñado para ser iniciado por el frontend de escritorio Electron y vincula su API HTTP únicamente al loopback.
+Servicio local Java 21 que recibe comentarios de TikTok LIVE mediante TikTokLiveJava y los reproduce con el motor Piper incluido. El servicio está diseñado para ser iniciado por el frontend de escritorio Electron y vincula su API HTTP únicamente al loopback.
 
 > TikTokLiveJava es un proyecto no oficial de ingeniería inversa. Revisa su licencia y las reglas de TikTok antes de conectarte a un LIVE real. Este adaptador solo escucha comentarios; no envía mensajes, usa cookies, rota identidades/IP ni implementa bucles agresivos de reconexión.
 
 ## Arquitectura
 
-El código usa arquitectura hexagonal. El dominio y los servicios de aplicación no dependen de HTTP, PowerShell ni TikTokLiveJava.
+El código usa arquitectura hexagonal. El dominio y los servicios de aplicación no dependen de HTTP ni TikTokLiveJava.
 
 ```mermaid
 graph LR
@@ -25,8 +25,8 @@ graph LR
   APP --> Q[Cola de voz acotada]
   APP --> LIVE[Puerto LiveChatClient]
   LIVE --> TT[Adaptador TikTokLiveJava]
-  Q --> SAPI[Puerto SpeechEngine]
-  SAPI --> PS[Windows SAPI / PowerShell o Piper local]
+  Q --> SPEECH[Puerto SpeechEngine]
+  SPEECH --> PIPER[Trabajador Piper local persistente]
   APP --> STORE[Puerto SettingsStore]
   STORE --> FILE[Archivo local de ajustes]
 ```
@@ -40,7 +40,7 @@ graph LR
 | `application/service` | Ciclo de conexión, saneamiento, límites, cola y validación de ajustes. |
 | `adapter/in/http` | API JSON estricta, local y exclusiva para la interfaz. |
 | `adapter/out/live` | Implementaciones TikTokLiveJava y prueba local. |
-| `adapter/out/windows` | Voces SAPI y salida de audio predeterminada de Windows. |
+| `adapter/out/windows` | Integración de audio de Windows usada por el adaptador de reproducción local. |
 | `adapter/out/piper` | Trabajador Piper local persistente y reproducción PCM. |
 | `bootstrap` | Configuración por entorno y ensamblaje de dependencias. |
 
@@ -59,9 +59,8 @@ Toda la configuración llega mediante variables de entorno. No se guardan creden
 | --- | --- | --- |
 | `APP_PLATFORM` | `WINDOWS` | Plataforma soportada actualmente. |
 | `LIVE_SOURCE` | `LOCAL_TEST` | `LOCAL_TEST` para pruebas offline o `TIKTOK_LIVE_JAVA` para comentarios reales. |
-| `TTS_ENGINE` | `PIPER` | `PIPER` de forma predeterminada, o `SAPI` como respaldo explícito. |
 | `PIPER_EXECUTABLE` | `backend/piper-native/piper/piper.exe` | Ejecutable nativo portable de Piper. |
-| `PIPER_MODEL` | `backend/piper/models/es_MX-claude-high.onnx` | Modelo local de voz Piper. |
+| `PIPER_MODEL` | `backend/piper/models/es_MX-claude-high.onnx` | Modelo Piper español predeterminado; el modelo inglés estadounidense `en_US-hfc_female-medium` se selecciona desde los ajustes de voz. |
 | `APP_PORT` | `8787` | Puerto HTTP de loopback, 1024-65535. |
 | `LOCAL_API_TOKEN` | vacío | Si se define, las rutas requieren `X-Local-Api-Token`. Electron lo genera por ejecución. |
 | `SPEECH_QUEUE_CAPACITY` | `200` | Mensajes pendientes, limitado para proteger la memoria. |
@@ -99,11 +98,9 @@ run-jar.bat
 
 ## Piper TTS local
 
-Piper está disponible como motor de voz completamente local. El binario portable de Windows y la voz mexicana `es_MX-claude-high` se incluyen para desarrollo y producción:
+Piper es el único motor de voz documentado y funciona completamente de forma local. El binario portable de Windows y las voces mexicana `es_MX-claude-high` (predeterminada) e inglés estadounidense `en_US-hfc_female-medium` se incluyen para desarrollo y producción. Las frases de eventos siguen el idioma de la voz seleccionada (`dice` en español y `says` en inglés):
 
-```bat
-Verifica que existan `backend/piper-native/piper/piper.exe` y el modelo.
-```
+Antes de iniciar, verifica que existan `backend/piper-native/piper/piper.exe` y ambos archivos de modelo.
 
 Luego inicia la interfaz desde `frontend\\` con Piper activado:
 
@@ -111,7 +108,7 @@ Luego inicia la interfaz desde `frontend\\` con Piper activado:
 test-piper-ui.bat
 ```
 
-El proceso nativo de Piper permanece activo durante la sesión y se reinicia automáticamente si deja de responder. Piper se selecciona si `TTS_ENGINE` no se define; usa `TTS_ENGINE=SAPI` para el respaldo. No se necesita instalar Python ni un entorno virtual.
+El proceso nativo de Piper permanece activo durante la sesión y se reinicia automáticamente si deja de responder. Al cambiar de voz, Piper se reinicia con el modelo ONNX correspondiente.
 
 Mide el tiempo de síntesis sin reproducir audio:
 
@@ -127,7 +124,7 @@ La API se enlaza a `127.0.0.1` y usa el token temporal cuando Electron la inicia
 | --- | --- | --- |
 | `GET` | `/api/health` | Comprobación básica. |
 | `GET` | `/api/status` | Conexión, cola, voz y diagnósticos. |
-| `GET` | `/api/voices` | Voces instaladas expuestas por el SAPI clásico de Windows. |
+| `GET` | `/api/voices` | Catálogo de voces Piper incluidas. |
 | `GET` | `/api/settings` | Voz, velocidad y salida actuales. |
 | `PUT` | `/api/settings` | Actualizar ajustes validados. |
 | `POST` | `/api/connect` | Conectar `{ "username": "uniqueId" }`. |
@@ -137,8 +134,8 @@ La API se enlaza a `127.0.0.1` y usa el token temporal cuando Electron la inicia
 ## Controles de recursos y seguridad
 
 - Cola FIFO con capacidad máxima configurable.
-- Un único trabajador secuencial para el motor SAPI o Piper seleccionado; no crea procesos de voz ilimitados.
-- Las alertas de regalo se decodifican una vez desde el MP3 incluido y ese mismo trabajador reutiliza su PCM en memoria.
+- Un único trabajador secuencial para Piper; no crea procesos de voz ilimitados.
+- Las alertas de regalo (cantidad >= 10) se decodifican una vez desde el MP3 incluido y ese mismo trabajador reutiliza su PCM en memoria.
 - Límites deslizantes globales y por autor.
 - Tamaño máximo, parser JSON estricto y saneamiento del texto.
 - Loopback, token temporal y sin CORS ni listener público.
@@ -147,10 +144,10 @@ La API se enlaza a `127.0.0.1` y usa el token temporal cuando Electron la inicia
 
 ## Alertas de regalo
 
-Los regalos y donaciones se leen primero y luego reproducen el MP3 local incluido antes de que la cola FIFO continúe. La alerta se decodifica una vez al iniciar y se reutiliza en memoria.
+Los regalos y donaciones de cantidad 10 o mayor se leen primero y luego reproducen el MP3 local incluido antes de que la cola FIFO continúe. Los regalos menores no activan la alerta. La alerta se decodifica una vez al iniciar y se reutiliza en memoria.
 
 ## Licencia y avisos de terceros
 
-El backend también incluye JLayer bajo LGPL y el MP3 de alerta proporcionado para el proyecto. Piper y su modelo de voz tienen sus propias licencias upstream. Revisa [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) antes de redistribuirlo.
+El backend también incluye JLayer bajo LGPL y el MP3 de alerta proporcionado para el proyecto. Piper y sus modelos de voz tienen sus propias licencias upstream. Revisa [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) antes de redistribuirlo.
 
 El código fuente se mantiene en este workspace. TikTokLiveJava es una dependencia MIT independiente; conserva sus avisos al redistribuir el JAR y revisa siempre sus términos actuales.

@@ -16,7 +16,7 @@ public final class LiveConnectionService implements ConnectionUseCase {
     private final SpeechQueueService speechQueue;
     private final RuntimeDiagnostics diagnostics;
     private final AtomicBoolean acceptingLiveMessages = new AtomicBoolean();
-    private final AtomicReference<ConnectionSnapshot> snapshot = new AtomicReference<>(new ConnectionSnapshot(ConnectionState.DISCONNECTED, "", "Sin conexión"));
+    private final AtomicReference<ConnectionSnapshot> snapshot = new AtomicReference<>(new ConnectionSnapshot(ConnectionState.DISCONNECTED, "", "Disconnected"));
 
     public LiveConnectionService(LiveChatClient client, SpeechQueueService speechQueue, RuntimeDiagnostics diagnostics) {
         this.client = Objects.requireNonNull(client);
@@ -60,7 +60,7 @@ public final class LiveConnectionService implements ConnectionUseCase {
         acceptingLiveMessages.set(false);
         client.disconnect();
         speechQueue.discardPending();
-        snapshot.set(new ConnectionSnapshot(ConnectionState.DISCONNECTED, "", "Sin conexión"));
+        snapshot.set(new ConnectionSnapshot(ConnectionState.DISCONNECTED, "", "Disconnected"));
     }
     @Override public ConnectionSnapshot snapshot() { return snapshot.get(); }
     private String safeMessage(Throwable error) { return error.getMessage() == null ? "Error de conexión" : TextSanitizer.sanitize(error.getMessage()); }

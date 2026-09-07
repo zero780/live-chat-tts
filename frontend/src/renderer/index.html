@@ -32,6 +32,7 @@
         </div>
         <button id="disconnect-button" class="text-button" hidden data-i18n="action.disconnect">Disconnect</button>
       </section>
+      <p id="error-message" class="error-message" role="alert"></p>
       <section class="metrics" aria-label="Activity" data-i18n-aria-label="activity.label">
         <div><strong id="queue-depth">0</strong><span data-i18n="metric.queue">In queue</span></div>
         <div><strong id="accepted-count">0</strong><span data-i18n="metric.read">Read</span></div>
@@ -49,21 +50,24 @@
           <p id="chat-empty" class="chat-empty" data-i18n="activity.empty">LIVE messages will appear here.</p>
         </div>
       </section>
+      <section id="test-card" class="card test-card">
+        <span data-i18n="test.localMode">Local test mode</span><button id="test-voice" class="secondary" data-i18n="action.testVoice">Test voice</button>
+      </section>
       <section class="card settings-card">
         <button id="settings-toggle" class="settings-toggle" aria-expanded="false">
           <span data-i18n="settings.title">⚙ Voice settings</span><span id="settings-arrow">⌄</span>
         </button>
+
         <form id="settings-form" class="settings-form" hidden>
           <label for="voice" data-i18n="settings.voice">SAPI voice</label><select id="voice" required></select>
           <label for="rate"><span data-i18n="settings.speed">Speed</span> <output id="rate-value">0</output></label><input id="rate" type="range" min="-10" max="10" value="0" />
-          <label for="audio-output" data-i18n="settings.output">Audio output</label><select id="audio-output"></select>
+          <div class="audio-output-setting" hidden>
+            <label for="audio-output" data-i18n="settings.output">Audio output</label><select id="audio-output"></select>
+          </div>
           <button class="secondary" type="submit" data-i18n="action.saveSettings">Save settings</button>
         </form>
       </section>
-      <section id="test-card" class="card test-card">
-        <span data-i18n="test.localMode">Local test mode</span><button id="test-voice" class="secondary" data-i18n="action.testVoice">Test voice</button>
-      </section>
-      <p id="error-message" class="error-message" role="alert"></p>
+      
       <div id="save-toast" class="save-toast" role="status" aria-live="polite" hidden>
         <span aria-hidden="true">✓</span><span data-i18n="toast.settingsSaved">Settings saved</span>
       </div>

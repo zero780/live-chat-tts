@@ -9,6 +9,6 @@ contextBridge.exposeInMainWorld('desktop', {
   saveSettings: (settings) => ipcRenderer.invoke('backend:save-settings', settings),
   connect: (username) => ipcRenderer.invoke('backend:connect', username),
   disconnect: () => ipcRenderer.invoke('backend:disconnect'),
-  testMessage: (message) => ipcRenderer.invoke('backend:test-message', message)
+  testMessage: (message) => ipcRenderer.invoke('backend:test-message', message),
+  notify: (payload) => ipcRenderer.invoke('desktop:notify', payload)
 });
-
