@@ -14,14 +14,17 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class SpeechQueueService implements AutoCloseable {
     private static final int HISTORY_CAPACITY = 100;
-    private static final Duration MAX_QUEUE_AGE = Duration.ofSeconds(20);
-    private static final int GIFT_CUE_MINIMUM_QUANTITY = 10;
+    private static final Duration MAX_QUEUE_AGE = Duration.ofMinutes(1);
+    private static final int GIFT_CUE_MINIMUM_COIN_VALUE = 10;
     private final ArrayBlockingQueue<QueuedMessage> queue;
+    private final LinkedBlockingQueue<QueuedMessage> giftQueue = new LinkedBlockingQueue<>();
     private final SpeechEngine speechEngine;
     private final AudioCuePlayer giftCuePlayer;
     private final SpeechSettingsUseCase settings;
@@ -58,6 +61,12 @@ public final class SpeechQueueService implements AutoCloseable {
 
     public boolean submit(ChatMessage message) {
         long id = messageIds.incrementAndGet();
+        if (message.type() == ChatMessage.Type.GIFT) {
+            addHistory(id, message, "QUEUED");
+            giftQueue.offer(new QueuedMessage(id, message));
+            accepted.incrementAndGet();
+            return true;
+        }
         if (!senderLimiter.tryAcquire(message.author()) || !globalLimiter.tryAcquire("all")) {
             rejected.incrementAndGet();
             addHistory(id, message, "REJECTED");
@@ -84,9 +93,11 @@ public final class SpeechQueueService implements AutoCloseable {
     private void consume() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                QueuedMessage queued = queue.take();
+                QueuedMessage queued = giftQueue.poll();
+                if (queued == null) queued = queue.poll(250, TimeUnit.MILLISECONDS);
+                if (queued == null) continue;
                 ChatMessage message = queued.message();
-                if (message.receivedAt().isBefore(Instant.now().minus(MAX_QUEUE_AGE))) {
+                if (message.type() != ChatMessage.Type.GIFT && message.receivedAt().isBefore(Instant.now().minus(MAX_QUEUE_AGE))) {
                     dropped.incrementAndGet();
                     updateState(queued.id(), "DROPPED");
                     continue;
@@ -101,7 +112,7 @@ public final class SpeechQueueService implements AutoCloseable {
                     String spokenText = message.type() == ChatMessage.Type.CHAT
                             ? spokenAuthor + (english ? " says: " : " dice: ") + message.text()
                             : spokenAuthor + " " + eventText(message, english);
-                    for (String fragment : TextSanitizer.speechFragments(spokenText)) {
+                    for (String fragment : TextSanitizer.speechFragments(TextSanitizer.emojisForSpeech(spokenText, english))) {
                         speechEngine.speak(fragment, current.voiceId(), current.speechRate(), current.audioOutputId());
                     }
                     playGiftCue(message);
@@ -146,7 +157,7 @@ public final class SpeechQueueService implements AutoCloseable {
     }
 
     public boolean isSpeaking() { return speaking.get(); }
-    public int depth() { return queue.size(); }
+    public int depth() { return queue.size() + giftQueue.size(); }
     public long accepted() { return accepted.get(); }
     public long dropped() { return dropped.get(); }
     public long rejected() { return rejected.get(); }
@@ -157,7 +168,8 @@ public final class SpeechQueueService implements AutoCloseable {
     }
 
     private void playGiftCue(ChatMessage message) {
-        if (message.type() != ChatMessage.Type.GIFT || message.giftQuantity() < GIFT_CUE_MINIMUM_QUANTITY || !giftCueEnabled.get()) return;
+        long totalCoins = (long) message.giftQuantity() * message.giftCoinValue();
+        if (message.type() != ChatMessage.Type.GIFT || totalCoins <= GIFT_CUE_MINIMUM_COIN_VALUE || !giftCueEnabled.get()) return;
         try {
             giftCuePlayer.play();
         } catch (Exception exception) {

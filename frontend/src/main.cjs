@@ -91,7 +91,7 @@ function stopBackend() {
 async function api(endpoint, options = {}) {
   if (!backend?.child || backend.child.killed) throw new Error(backend?.lastProcessError || 'El backend no está iniciado.');
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5_000);
+  const timeout = setTimeout(() => controller.abort(), options.timeout || 5_000);
   try {
     const response = await fetch(`http://127.0.0.1:${backend.port}${endpoint}`, {
       method: options.method || 'GET',
@@ -113,7 +113,9 @@ function setupIpc() {
   ipcMain.handle('backend:status', () => api('/api/status'));
   ipcMain.handle('backend:voices', () => api('/api/voices'));
   ipcMain.handle('backend:settings', () => api('/api/settings'));
+  ipcMain.handle('backend:gift-cue', () => api('/api/gift-cue'));
   ipcMain.handle('backend:save-settings', (_, settings) => api('/api/settings', { method: 'PUT', body: settings }));
+  ipcMain.handle('backend:upload-gift-cue', (_, payload) => api('/api/gift-cue', { method: 'POST', body: { audioBase64: String(payload?.audioBase64 || ''), fileName: String(payload?.fileName || '') }, timeout: 30_000 }));
   ipcMain.handle('backend:connect', (_, username) => api('/api/connect', { method: 'POST', body: { username } }));
   ipcMain.handle('backend:disconnect', () => api('/api/disconnect', { method: 'POST', body: {} }));
   ipcMain.handle('backend:test-message', (_, message) => api('/api/test/messages', { method: 'POST', body: message }));

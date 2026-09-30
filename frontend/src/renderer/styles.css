@@ -17,3 +17,7 @@ button { cursor: pointer; }
 @keyframes pulse { 50% { transform: scale(1.06); box-shadow: 0 0 0 11px #8267ee19, 0 12px 30px #4e39b055; } } @keyframes message-active { 50% { border-color: #bcaeff; } } @keyframes equalize { to { height: 38px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 .chat-message.state-cancelled { opacity: .5; }
+.settings-form input[type="file"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; clip-path: inset(50%); }
+.file-input { display: flex !important; align-items: center; justify-content: space-between; gap: 10px; min-height: 42px; margin-bottom: 0 !important; padding: 5px 6px 5px 11px; border: 1px dashed #8267ee88; border-radius: 9px; color: #aaa8b8 !important; background: #12131c; cursor: pointer; }
+.file-input:hover, .file-input:focus-within { border-color: #9e89ff; background: #201c38; }.file-input span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.file-input strong { flex: 0 0 auto; padding: 7px 9px; border-radius: 6px; color: #edeaff; background: #4b3d91; font-size: 11px; }.file-name { margin: 6px 1px 0; overflow: hidden; color: #9896a7; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.save-toast.error { border-color: #ff8e8e66; color: #fff1f1; background: #542a33; }.save-toast.error > span:first-child { color: #4a1720; background: #ff9eaa; }
