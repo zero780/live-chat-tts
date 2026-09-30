@@ -61,6 +61,10 @@
         <form id="settings-form" class="settings-form" hidden>
           <label for="voice" data-i18n="settings.voice">SAPI voice</label><select id="voice" required></select>
           <label for="rate"><span data-i18n="settings.speed">Speed</span> <output id="rate-value">0</output></label><input id="rate" type="range" min="-10" max="10" value="0" />
+          <label for="gift-cue" data-i18n="settings.giftCue">Gift alert audio</label>
+          <label class="file-input" for="gift-cue"><span id="gift-cue-name" data-i18n="settings.giftCueHint">Choose an MP3 up to 10 MB</span><strong data-i18n="action.chooseFile">Choose file</strong></label>
+          <input id="gift-cue" type="file" accept="audio/mpeg,.mp3" />
+          <p id="gift-cue-status" class="file-name" data-i18n="settings.giftCueDefault">Default alert audio</p>
           <div class="audio-output-setting" hidden>
             <label for="audio-output" data-i18n="settings.output">Audio output</label><select id="audio-output"></select>
           </div>

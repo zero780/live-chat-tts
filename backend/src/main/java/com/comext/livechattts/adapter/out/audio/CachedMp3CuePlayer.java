@@ -4,6 +4,8 @@ import com.comext.livechattts.application.port.out.AudioCuePlayer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -30,6 +32,12 @@ public final class CachedMp3CuePlayer implements AudioCuePlayer {
     public static CachedMp3CuePlayer fromResource(String resourceName) throws Exception {
         try (InputStream source = CachedMp3CuePlayer.class.getResourceAsStream(resourceName)) {
             if (source == null) throw new IOException("Gift alert resource was not found: " + resourceName);
+            return decode(source);
+        }
+    }
+
+    public static CachedMp3CuePlayer fromFile(Path file) throws Exception {
+        try (InputStream source = Files.newInputStream(file)) {
             return decode(source);
         }
     }

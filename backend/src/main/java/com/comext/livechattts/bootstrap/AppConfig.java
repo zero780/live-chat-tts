@@ -5,12 +5,12 @@ import com.comext.livechattts.domain.LiveSource;
 import com.comext.livechattts.domain.TtsEngine;
 import java.nio.file.Path;
 
-public record AppConfig(Platform platform, LiveSource liveSource, TtsEngine ttsEngine, int port, int queueCapacity, String localApiToken, Path appDataDirectory, PiperRuntime piper) {
+public record AppConfig(Platform platform, LiveSource liveSource, TtsEngine ttsEngine, int port, int queueCapacity, int reconnectDelaySeconds, int reconnectMaxAttempts, String localApiToken, Path appDataDirectory, PiperRuntime piper) {
     public static AppConfig fromEnvironment() {
         Platform platform = Platform.fromEnvironment(System.getenv("APP_PLATFORM"));
         if (platform != Platform.WINDOWS) throw new IllegalStateException("Esta primera versión solo implementa WINDOWS");
         TtsEngine ttsEngine = TtsEngine.fromEnvironment(System.getenv("TTS_ENGINE"));
-        return new AppConfig(platform, LiveSource.fromEnvironment(System.getenv("LIVE_SOURCE")), ttsEngine, integer("APP_PORT", 8787, 1024, 65535), integer("SPEECH_QUEUE_CAPACITY", 200, 10, 2000), System.getenv("LOCAL_API_TOKEN"), dataDirectory(), PiperRuntime.fromEnvironment());
+        return new AppConfig(platform, LiveSource.fromEnvironment(System.getenv("LIVE_SOURCE")), ttsEngine, integer("APP_PORT", 8787, 1024, 65535), integer("SPEECH_QUEUE_CAPACITY", 200, 10, 2000), integer("LIVE_RECONNECT_DELAY_SECONDS", 3, 1, 60), integer("LIVE_RECONNECT_MAX_ATTEMPTS", 5, 0, 20), System.getenv("LOCAL_API_TOKEN"), dataDirectory(), PiperRuntime.fromEnvironment());
     }
     private static int integer(String name, int defaultValue, int min, int max) {
         String raw = System.getenv(name); if (raw == null || raw.isBlank()) return defaultValue;

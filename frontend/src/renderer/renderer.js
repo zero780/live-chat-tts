@@ -9,7 +9,8 @@ const translations = {
     'action.connect': 'Connect', 'action.connecting': 'Connecting…', 'action.disconnect': 'Disconnect', 'action.saveSettings': 'Save settings', 'action.testVoice': 'Test voice',
     'activity.label': 'Activity', 'activity.title': 'LIVE activity', 'activity.lastMessages': 'Last 100 messages', 'activity.empty': 'LIVE messages will appear here.',
     'metric.queue': 'In queue', 'metric.read': 'Read', 'metric.protected': 'Protected',
-    'settings.title': '⚙️ Voice settings', 'settings.voice': 'Narrator', 'settings.speed': 'Speed', 'settings.output': 'Audio output',
+    'settings.title': '⚙️ Voice settings', 'settings.voice': 'Narrator', 'settings.speed': 'Speed', 'settings.output': 'Audio output', 'settings.giftCue': 'Gift alert audio', 'settings.giftCueHint': 'Choose an MP3 up to 10 MB', 'settings.giftCueDefault': 'Default alert audio',
+    'action.chooseFile': 'Choose file', 'error.mp3Only': 'Choose an MP3 file of 10 MB or less.', 'toast.cueSaved': 'Alert audio saved: {name}', 'toast.cueError': 'Could not save the alert audio.',
     'test.localMode': '🔊 Local voice test', 'toast.settingsSaved': 'Settings saved',
     'message.user': 'User', 'message.queued': 'In queue', 'message.speaking': 'Speaking', 'message.spoken': 'Read', 'message.dropped': 'Dropped', 'message.rejected': 'Protected', 'message.cancelled': 'Skipped', 'message.failed': 'Error',
     'error.usernameRequired': 'Enter your TikTok username.', 'error.startFailed': 'Could not start the application.'
@@ -24,7 +25,8 @@ const translations = {
     'action.connect': 'Conectar', 'action.connecting': 'Conectando…', 'action.disconnect': 'Desconectar', 'action.saveSettings': 'Guardar ajustes', 'action.testVoice': 'Probar voz',
     'activity.label': 'Actividad', 'activity.title': 'Actividad del LIVE', 'activity.lastMessages': 'Últimos 100 mensajes', 'activity.empty': 'Los mensajes del LIVE aparecerán aquí.',
     'metric.queue': 'En cola', 'metric.read': 'Leídos', 'metric.protected': 'Protegidos',
-    'settings.title': '⚙️ Ajustes', 'settings.voice': 'Narrador', 'settings.speed': 'Velocidad', 'settings.output': 'Salida de audio',
+    'settings.title': '⚙️ Ajustes', 'settings.voice': 'Narrador', 'settings.speed': 'Velocidad', 'settings.output': 'Salida de audio', 'settings.giftCue': 'Audio de alerta por regalo', 'settings.giftCueHint': 'Elegí un MP3 de hasta 10 MB', 'settings.giftCueDefault': 'Audio de alerta predeterminado',
+    'action.chooseFile': 'Elegir archivo', 'error.mp3Only': 'Elegí un archivo MP3 de hasta 10 MB.', 'toast.cueSaved': 'Audio de alerta guardado: {name}', 'toast.cueError': 'No se pudo guardar el audio de alerta.',
     'test.localMode': '🔊 Prueba de voz local', 'toast.settingsSaved': 'Ajustes guardados',
     'message.user': 'Usuario', 'message.queued': 'En cola', 'message.speaking': 'Reproduciendo', 'message.spoken': 'Leído', 'message.dropped': 'Descartado', 'message.rejected': 'Protegido', 'message.cancelled': 'Omitido', 'message.failed': 'Error',
     'error.usernameRequired': 'Escribe tu usuario de TikTok.', 'error.startFailed': 'No se pudo iniciar la aplicación.'
@@ -36,7 +38,7 @@ const elements = {
   state: document.querySelector('#connection-state'), detail: document.querySelector('#connection-detail'), orb: document.querySelector('#voice-orb'), streamerAvatar: document.querySelector('#streamer-avatar'),
   queue: document.querySelector('#queue-depth'), accepted: document.querySelector('#accepted-count'), dropped: document.querySelector('#dropped-count'),
   toggle: document.querySelector('#settings-toggle'), arrow: document.querySelector('#settings-arrow'), form: document.querySelector('#settings-form'), voice: document.querySelector('#voice'),
-  rate: document.querySelector('#rate'), rateValue: document.querySelector('#rate-value'), output: document.querySelector('#audio-output'), error: document.querySelector('#error-message'), mode: document.querySelector('#mode-badge'), testCard: document.querySelector('#test-card'), testVoice: document.querySelector('#test-voice'), toast: document.querySelector('#save-toast'), chatList: document.querySelector('#chat-list'), chatEmpty: document.querySelector('#chat-empty'), chatCount: document.querySelector('#chat-count'), language: document.querySelector('#language-toggle'), languageFlag: document.querySelector('#language-flag')
+  rate: document.querySelector('#rate'), rateValue: document.querySelector('#rate-value'), output: document.querySelector('#audio-output'), giftCue: document.querySelector('#gift-cue'), giftCueName: document.querySelector('#gift-cue-name'), giftCueStatus: document.querySelector('#gift-cue-status'), error: document.querySelector('#error-message'), mode: document.querySelector('#mode-badge'), testCard: document.querySelector('#test-card'), testVoice: document.querySelector('#test-voice'), toast: document.querySelector('#save-toast'), chatList: document.querySelector('#chat-list'), chatEmpty: document.querySelector('#chat-empty'), chatCount: document.querySelector('#chat-count'), language: document.querySelector('#language-toggle'), languageFlag: document.querySelector('#language-flag')
 };
 
 let language = localStorage.getItem('live-chat-tts.language');
@@ -49,6 +51,7 @@ let runtimeSource = '';
 let statusRefreshInFlight = false;
 let previousConnectionState = null;
 let manualDisconnectPending = false;
+let savedCueName = '';
 const defaultAvatar = '../assets/user_default.jpg';
 
 function t(key, values = {}) {
@@ -65,6 +68,10 @@ function translateDocument() {
   elements.language.title = t('language.switchTo');
   elements.language.setAttribute('aria-label', t('language.switchTo'));
   elements.chatEmpty.textContent = t('activity.empty');
+  if (savedCueName) {
+    elements.giftCueName.textContent = savedCueName;
+    elements.giftCueStatus.textContent = savedCueName;
+  }
   if (runtimeSource) elements.mode.textContent = runtimeSource === 'LOCAL_TEST' ? t('mode.localTest') : t('mode.tiktok');
 }
 
@@ -77,8 +84,10 @@ function setStreamerAvatar(url) {
     elements.streamerAvatar.src = trustedHost ? parsed.href : defaultAvatar;
   } catch (_) { elements.streamerAvatar.src = defaultAvatar; }
 }
-function showSaved() {
+function showToast(message, error = false) {
   clearTimeout(toastTimer);
+  elements.toast.lastElementChild.textContent = message;
+  elements.toast.classList.toggle('error', error);
   elements.toast.hidden = false;
   requestAnimationFrame(() => elements.toast.classList.add('visible'));
   toastTimer = setTimeout(() => {
@@ -86,6 +95,7 @@ function showSaved() {
     setTimeout(() => { elements.toast.hidden = true; }, 180);
   }, 2600);
 }
+function showSaved() { showToast(t('toast.settingsSaved')); }
 function setBusy(busy) {
   isBusy = busy;
   elements.connect.disabled = busy;
@@ -137,7 +147,7 @@ function renderMessages(messages) {
 }
 
 async function loadSettings() {
-  const [voiceResponse, settings] = await Promise.all([window.desktop.voices(), window.desktop.settings()]);
+  const [voiceResponse, settings, giftCue] = await Promise.all([window.desktop.voices(), window.desktop.settings(), window.desktop.giftCue()]);
   elements.voice.replaceChildren();
   voiceResponse.voices.forEach((voice) => option(elements.voice, voice.id, voice.displayName));
   elements.output.replaceChildren();
@@ -146,6 +156,11 @@ async function loadSettings() {
   elements.rate.value = settings.speechRate;
   elements.rateValue.value = settings.speechRate;
   elements.output.value = settings.audioOutputId;
+  if (giftCue.fileName) {
+    savedCueName = giftCue.fileName;
+    elements.giftCueName.textContent = savedCueName;
+    elements.giftCueStatus.textContent = savedCueName;
+  }
 }
 
 async function refreshStatus() {
@@ -200,13 +215,39 @@ elements.toggle.addEventListener('click', () => {
   elements.arrow.textContent = open ? '⌃' : '⌄';
 });
 elements.rate.addEventListener('input', () => { elements.rateValue.value = elements.rate.value; });
+function fileToBase64(file) {
+  return file.arrayBuffer().then((buffer) => {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let offset = 0; offset < bytes.length; offset += 32_768) binary += String.fromCharCode(...bytes.subarray(offset, offset + 32_768));
+    return btoa(binary);
+  });
+}
 elements.form.addEventListener('submit', async (event) => {
   event.preventDefault();
   try {
     showError();
     await window.desktop.saveSettings({ voiceId: elements.voice.value, speechRate: Number(elements.rate.value), audioOutputId: elements.output.value });
     showSaved();
-  } catch (error) { showError(error); }
+  } catch (error) { showError(error); showToast(error instanceof Error ? error.message : t('toast.cueError'), true); }
+});
+elements.giftCue.addEventListener('change', async () => {
+  const cue = elements.giftCue.files[0];
+  if (!cue) return;
+  try {
+    showError();
+    if (!/\.mp3$/i.test(cue.name) || cue.size === 0 || cue.size > 10 * 1024 * 1024) throw new Error(t('error.mp3Only'));
+    const savedCue = await window.desktop.uploadGiftCue({ audioBase64: await fileToBase64(cue), fileName: cue.name });
+    savedCueName = savedCue.fileName;
+    elements.giftCueName.textContent = savedCueName;
+    elements.giftCueStatus.textContent = savedCueName;
+    elements.giftCue.value = '';
+    showToast(t('toast.cueSaved', { name: savedCueName }));
+  } catch (error) {
+    showError(error);
+    showToast(error instanceof Error ? error.message : t('toast.cueError'), true);
+    elements.giftCue.value = '';
+  }
 });
 async function connectFromInput() {
   if (isBusy || !elements.connect.hidden) {

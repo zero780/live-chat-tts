@@ -25,7 +25,8 @@ public final class TikTokLiveJavaClient implements LiveChatClient {
                 .onComment((liveClient, event) -> publish(onMessage, displayName(event.getUser()), event.getText(), ChatMessage.Type.CHAT))
                 .onGift((liveClient, event) -> {
                     int quantity = Math.max(1, event.getCombo());
-                    publish(onMessage, displayName(event.getUser()), "ha enviado un regalo " + event.getGift().getName() + " por " + quantity, ChatMessage.Type.GIFT, quantity);
+                    int coins = Math.max(0, event.getGift().getDiamondCost());
+                    publish(onMessage, displayName(event.getUser()), "ha enviado un regalo " + event.getGift().getName() + " por " + quantity, ChatMessage.Type.GIFT, quantity, coins);
                 })
                 .onFollow((liveClient, event) -> publish(onMessage, displayName(event.getUser()), "ahora sigue el canal", ChatMessage.Type.FOLLOW))
                 .onSubscribe((liveClient, event) -> publish(onMessage, displayName(event.getUser()), "se ha suscrito al canal", ChatMessage.Type.SUBSCRIBE))
@@ -73,8 +74,8 @@ public final class TikTokLiveJavaClient implements LiveChatClient {
         onMessage.accept(new ChatMessage(author, text, Instant.now(), type));
     }
 
-    private void publish(Consumer<ChatMessage> onMessage, String author, String text, ChatMessage.Type type, int giftQuantity) {
-        onMessage.accept(new ChatMessage(author, text, Instant.now(), type, giftQuantity));
+    private void publish(Consumer<ChatMessage> onMessage, String author, String text, ChatMessage.Type type, int giftQuantity, int giftCoinValue) {
+        onMessage.accept(new ChatMessage(author, text, Instant.now(), type, giftQuantity, giftCoinValue));
     }
 
     private String displayName(User user) {
